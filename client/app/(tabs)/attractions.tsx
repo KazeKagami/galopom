@@ -1,7 +1,6 @@
 // app/attractions-list.tsx (обновленный компонент карточки)
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { API_URL } from "@/config/api.config";
 import React, { useEffect, useState, useMemo } from "react";
 import {
     ActivityIndicator,
@@ -11,19 +10,20 @@ import {
     View,
     Alert,
     Dimensions,
+    ScrollView,
+    Platform,
+    FlatList
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { FlatGrid } from 'react-native-super-grid';
+import { Attraction } from '../../../shared/types/attractions';
+import { getAttractions } from "@/features/attractions/attractions.api";
 
-interface Attraction {
-    m_id: number;
-    title: string;
-    city?: string;
-    country?: string;
-    description?: string;
-    year_arise?: number;
-    type?: string;
-}
+const columns = Platform.select({
+    web: 2,
+    ios: 2,
+    android: 2,
+    default: 2,
+});
 
 interface ItemProps {
     item: Attraction;
@@ -118,21 +118,16 @@ export default function AttractionsListScreen() {
     const [attractions, setAttractions] = useState<Attraction[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [numColumns, setNumColumns] = useState(2);
     const [refreshing, setRefreshing] = useState(false);
 
     // Функция загрузки данных с API
     const fetchAttractions = async () => {
         try {
             setError(null);
-            const response = await fetch(`${API_URL}/attractions`);
 
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
+            const response = await getAttractions();
 
-            const data = await response.json();
-            setAttractions(data);
+            setAttractions(response.data);
         } catch (err: any) {
             setError(err.message || 'Ошибка загрузки данных');
             Alert.alert('Ошибка', 'Не удалось загрузить достопримечательности');
@@ -140,32 +135,6 @@ export default function AttractionsListScreen() {
             setLoading(false);
             setRefreshing(false);
         }
-    };
-
-    // Проверка статуса сервера
-    const checkServerStatus = async () => {
-        try {
-            const response = await fetch(API_URL.replace('/api', ''));
-            if (response.ok) {
-                Alert.alert('✅ Сервер доступен', 'API работает корректно');
-                return true;
-            }
-        } catch (error: any) {
-            Alert.alert(
-                '❌ Сервер недоступен',
-                `Проверьте:\n1. Запущен ли сервер\n2. IP адрес: ${API_URL}\n3. Порт 5000 открыт\n\nОшибка: ${error.message}`
-            );
-            return false;
-        }
-        return false;
-    };
-
-    // Функция для изменения количества столбцов
-    const changeNumColumns = () => {
-        const options = [2, 3, 4];
-        const currentIndex = options.indexOf(numColumns);
-        const nextIndex = (currentIndex + 1) % options.length;
-        setNumColumns(options[nextIndex]);
     };
 
     // Обновление списка (pull-to-refresh)
@@ -179,9 +148,8 @@ export default function AttractionsListScreen() {
         fetchAttractions();
     }, []);
 
-    // Получаем ширину экрана для расчета размеров
     const screenWidth = Dimensions.get('window').width;
-    const itemWidth = screenWidth / numColumns - 12;
+    const itemWidth = screenWidth / columns;
 
     // Отображение загрузки
     if (loading) {
@@ -206,9 +174,6 @@ export default function AttractionsListScreen() {
                     <TouchableOpacity style={styles.retryButton} onPress={fetchAttractions}>
                         <ThemedText style={styles.retryButtonText}>Повторить</ThemedText>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.checkButton} onPress={checkServerStatus}>
-                        <ThemedText style={styles.checkButtonText}>Проверить сервер</ThemedText>
-                    </TouchableOpacity>
                 </View>
             </SafeAreaView>
         );
@@ -230,37 +195,31 @@ export default function AttractionsListScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#000' : '#f5f5f5' }]}>
-            {/* Хедер с управлением */}
-            <View style={[styles.header, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
-                <View>
-                    <ThemedText style={styles.title}>Достопримечательности</ThemedText>
-                    <ThemedText style={styles.subtitle}>
-                        Найдено {attractions.length} объектов
-                    </ThemedText>
+            <View style={{ flex: 1, flexDirection: 'row' }}>
+                <View style={[styles.attractionList, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+                    <View style={[styles.header, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+                        <ThemedText style={styles.title}>Достопримечательности</ThemedText>
+                        <ThemedText style={styles.subtitle}>Найдено {attractions.length} объектов</ThemedText>
+                    </View>
+
+                    {/* Список с настраиваемыми столбцами */}
+                    <FlatList
+                        data={attractions}
+                        numColumns={columns}
+                        key={columns} // важно для ререндера!
+                        columnWrapperStyle={{ gap: 8 }}
+                        renderItem={({ item }) => (
+                            <View style={{ flex: 1, height: 150 }}>
+                                <AttractionCard item={item} numColumns={columns} />
+                            </View>
+                        )}
+                        showsVerticalScrollIndicator={false}
+                    />
                 </View>
-
-                {/* Кнопка изменения количества столбцов */}
-                <TouchableOpacity
-                    style={[styles.columnButton, { backgroundColor: isDark ? '#333' : '#e0e0e0' }]}
-                    onPress={changeNumColumns}
-                >
-                    <ThemedText style={styles.columnButtonText}>
-                        {numColumns} 📱
-                    </ThemedText>
-                </TouchableOpacity>
+                <View style={[{ width: screenWidth / 5, margin: 10 }, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+                    <ThemedText>Фильтры</ThemedText>
+                </View>
             </View>
-
-            {/* Список с настраиваемыми столбцами */}
-            <FlatGrid
-                itemDimension={itemWidth}
-                data={attractions}
-                renderItem={({ item }) => (
-                    <AttractionCard item={item} numColumns={numColumns} />
-                )}
-                spacing={8}
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-            />
         </SafeAreaView>
     );
 }
@@ -313,6 +272,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     header: {
+        flex: 1,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -320,6 +280,7 @@ const styles = StyleSheet.create({
         paddingTop: 30,
         borderBottomWidth: 1,
         borderBottomColor: '#e0e0e0',
+        borderTopRightRadius: 20,
     },
     title: {
         fontSize: 24,
@@ -383,4 +344,9 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         marginTop: 4,
     },
+    attractionList: {
+        flex: 1,
+        marginTop: 10,
+        marginLeft: 100,
+    }
 });
