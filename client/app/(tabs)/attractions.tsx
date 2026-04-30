@@ -280,7 +280,6 @@ const styles = StyleSheet.create({
         paddingTop: 30,
         borderBottomWidth: 1,
         borderBottomColor: '#e0e0e0',
-        borderTopRightRadius: 20,
     },
     title: {
         fontSize: 24,
@@ -348,5 +347,6 @@ const styles = StyleSheet.create({
         flex: 1,
         marginTop: 10,
         marginLeft: 100,
+        marginBottom: 10,
     }
 });
