@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const sortingFeaturesControllers = require("../controllers/filters.controller");
 
-router.get('/types', sortingFeaturesControllers.types);
+router.get('/kinds', sortingFeaturesControllers.kinds);
 router.get('/cities', sortingFeaturesControllers.cities);
 router.get('/countries', sortingFeaturesControllers.countries);
 router.get('/architects', sortingFeaturesControllers.architects);

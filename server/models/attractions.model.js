@@ -16,7 +16,7 @@ const attractionSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
-    type: {
+    kind: {
         type: String,
         default: ''
     },

@@ -8,7 +8,7 @@ const baseSchema = new mongoose.Schema({
     }
 })
 
-const AttractionTypes = mongoose.model('AttractionTypes', baseSchema, 'attractionTypes');
+const Kinds = mongoose.model('Kinds', baseSchema, 'kinds');
 const Cities = mongoose.model('Cities', baseSchema, 'cities');
 const Countries = mongoose.model('Countries', baseSchema, 'countries');
 const Architects = mongoose.model('Architects', baseSchema, 'architects');
@@ -21,5 +21,5 @@ module.exports = {
     Architects,
     Sculptors,
     IdeaAuthors,
-    AttractionTypes
+    Kinds
 }

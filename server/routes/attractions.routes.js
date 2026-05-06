@@ -5,14 +5,16 @@ const attractionController = require('../controllers/attraction.controller');
 // GET /api/attractions - все достопримечательности
 router.get('/', attractionController.getAllAttractions);
 
-// GET /api/attractions/:id - одна по ID
-router.get('/:m_id', attractionController.getAttractionById);
+// GET /api/attractions/city/:city - по городу
+router.get('/city/:city', attractionController.getAttractionsByCity);
 
-/*// GET /api/attractions/year/:year - по году
+// GET /api/attractions/year/:year - по году
 router.get('/year/:year', attractionController.getAttractionsByYear);
 
-// GET /api/attractions/city/:city - по городу
-router.get('/city/:city', attractionController.getAttractionsByCity);*/
+router.get('/kind/:kind', attractionController.getAttractionsByKind)
+
+// GET /api/attractions/:id - одна по ID
+router.get('/:m_id', attractionController.getAttractionById);
 
 // POST /api/attractions - создать
 router.post('/', attractionController.createAttraction);

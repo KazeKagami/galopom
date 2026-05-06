@@ -16,7 +16,7 @@ const createHandler = (modelName) => {
 
 // Создаём обработчики для всех моделей
 const getFilterOptions = {
-    types: createHandler('AttractionTypes'),
+    kinds: createHandler('Kinds'),
     cities: createHandler('Cities'),
     countries: createHandler('Countries'),
     architects: createHandler('Architects'),
