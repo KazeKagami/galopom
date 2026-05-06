@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const attractionController = require('../controllers/attractionController');
+const attractionController = require('../controllers/attraction.controller');
 
 // GET /api/attractions - все достопримечательности
 router.get('/', attractionController.getAllAttractions);

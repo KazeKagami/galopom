@@ -5,7 +5,8 @@ require('dotenv').config();
 const connectDB = require('./config/db');  // ← импорт подключения
 
 // Подключаем маршруты
-const attractionRoutes = require('./routes/attractions');
+const attractionRoutes = require('./routes/attractions.routes');
+const sortRoutes = require('./routes/filters.routes');
 //const authRoutes = require('./routes/auth')
 
 const app = express();
@@ -20,6 +21,7 @@ connectDB();
 
 // Маршруты
 app.use('/api/attractions', attractionRoutes);
+app.use('/api/filter', sortRoutes);
 //app.use("/api/auth", authRoutes)
 
 // Базовый маршрут для проверки

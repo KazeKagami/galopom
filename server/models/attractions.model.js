@@ -71,6 +71,6 @@ const attractionSchema = new mongoose.Schema({
 attractionSchema.index({ m_id: 1 });
 
 // Создаём модель
-const Attraction = mongoose.model('Attraction', attractionSchema);
+const Attraction = mongoose.model('Attraction', attractionSchema, 'attractions');
 
 module.exports = Attraction;
