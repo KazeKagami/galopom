@@ -4,7 +4,7 @@ import { Attraction } from '../../../shared/types/attractions.types';
 import { apiClient } from '../../services/api.client';
 
 type QueryParams = {
-    sort?: 'title' | 'm_id';
+    sort?: 'm_id' | 'title';
     order?: 'asc' | 'desc';
 };
 

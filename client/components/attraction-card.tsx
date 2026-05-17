@@ -1,8 +1,6 @@
 import { useMemo } from "react";
-import { StyleSheet, useColorScheme, View } from "react-native";
+import { StyleSheet, useColorScheme, View, Text } from "react-native";
 import { Attraction } from "../../shared/types/attractions.types";
-import { ThemedView } from "./themed-view";
-import { ThemedText } from "./themed-text";
 
 interface ItemProps {
     item: Attraction;
@@ -49,43 +47,37 @@ export function AttractionCard({ item, numColumns }: ItemProps) {
     }, [item.city, item.country]);
 
     return (
-        <ThemedView style={[styles.card, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
-            {/* Название - всегда показываем, обрезаем если длинное */}
-            <ThemedText style={styles.cardTitle} numberOfLines={numColumns === 1 ? 3 : 2}>
+        <View style={[styles.card, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+            <Text style={styles.cardTitle} numberOfLines={numColumns === 1 ? 3 : 2}>
                 {truncateText(item.title, limits.title)}
-            </ThemedText>
+            </Text>
 
-            {/* Местоположение - показываем если есть */}
             <View style={styles.locationRow}>
-                <ThemedText style={styles.cardLocation} numberOfLines={1}>
-                    📍 {truncateText(locationText, limits.location)}
-                </ThemedText>
+                <Text style={styles.cardLocation} numberOfLines={1}>
+                    {`📍 ${truncateText(locationText, limits.location)}`}
+                </Text>
             </View>
 
-            {/* Год - всегда показываем если есть */}
             {item.year_arise && (
-                <ThemedText style={styles.cardYear}>
-                    🏛️ {item.year_arise} г.
-                </ThemedText>
+                <Text style={styles.cardYear}>
+                    {`🏛️ ${item.year_arise} г.`}
+                </Text>
             )}
 
-            {/* Описание - показываем только если есть и ограничиваем по длине */}
             {item.description && (
-                <ThemedText
+                <Text
                     style={styles.cardDescription}
-                    numberOfLines={numColumns === 1 ? 4 : (numColumns === 2 ? 3 : 2)}
-                >
+                    numberOfLines={numColumns === 1 ? 4 : (numColumns === 2 ? 3 : 2)}>
                     {truncateText(item.description, limits.description)}
-                </ThemedText>
+                </Text>
             )}
 
-            {/* Заглушка для пустых полей */}
             {!item.year_arise && !item.description && (
-                <ThemedText style={styles.cardEmpty}>
-                    ✨ Информация уточняется
-                </ThemedText>
+                <Text style={styles.cardEmpty}>
+                    {'✨ Информация уточняется'}
+                </Text>
             )}
-        </ThemedView>
+        </View>
     );
 };
 
