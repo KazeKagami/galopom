@@ -1,8 +1,37 @@
-import { Attraction } from '../../../shared/types/attractions';
+// features/attractions/attractions.api.ts
+
+import { Attraction } from '../../../shared/types/attractions.types';
 import { apiClient } from '../../services/api.client';
 
-export const getAttractions = () => apiClient.get<Attraction[]>('/attractions');
+type QueryParams = {
+    sort?: 'title' | 'm_id';
+    order?: 'asc' | 'desc';
+};
 
-export const getAttractionById = (id: number) => apiClient.get<Attraction[]>(`/attractions/${id}`);
+// Получить все
+export const getAttractions = (params?: QueryParams) => {
+    return apiClient.get<Attraction[]>('/attractions', params);
+};
 
-export const createAttraction = (data: any) => apiClient.post<Attraction[]>('/attractions', data);
+// Фильтрация + сортировка
+export const getFilteredAttractions = (
+    filters: {
+        kinds?: string[];
+        cities?: string[];
+        countries?: string[];
+        architects?: string[];
+        sculptors?: string[];
+        ideaAuthors?: string[];
+    },
+    params?: QueryParams
+) => {
+    return apiClient.post<Attraction[]>('/attractions/filter', filters, params);
+};
+
+// Получить одну
+export const getAttractionById = (id: number) =>
+    apiClient.get<Attraction>(`/attractions/${id}`);
+
+// Создать
+export const createAttraction = (data: any) =>
+    apiClient.post<Attraction>('/attractions', data);

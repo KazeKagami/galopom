@@ -13,7 +13,7 @@ const Cities = mongoose.model('Cities', baseSchema, 'cities');
 const Countries = mongoose.model('Countries', baseSchema, 'countries');
 const Architects = mongoose.model('Architects', baseSchema, 'architects');
 const Sculptors = mongoose.model('Sculptors', baseSchema, 'sculptors');
-const IdeaAuthors = mongoose.model('IdeaAuthors', baseSchema, 'ideaAuthors');
+const IdeaAuthors = mongoose.model('IdeaAuthors', baseSchema, 'idea_authors');
 
 module.exports = {
     Cities,

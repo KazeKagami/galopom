@@ -5,6 +5,8 @@ const attractionController = require('../controllers/attraction.controller');
 // GET /api/attractions - все достопримечательности
 router.get('/', attractionController.getAllAttractions);
 
+router.post('/filter', attractionController.filterAttractions);
+
 // GET /api/attractions/city/:city - по городу
 router.get('/city/:city', attractionController.getAttractionsByCity);
 

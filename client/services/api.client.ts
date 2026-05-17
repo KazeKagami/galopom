@@ -1,4 +1,5 @@
 // services/api.client.ts
+
 import { API_CONFIG, API_URL } from '../config/api.config';
 
 interface ApiResponse<T = any> {
@@ -16,11 +17,19 @@ class ApiClient {
         this.timeout = API_CONFIG.timeout;
     }
 
+    private buildUrl(endpoint: string, params?: Record<string, any>) {
+        if (!params) return `${this.baseURL}${endpoint}`;
+
+        const query = new URLSearchParams(params as any).toString();
+        return `${this.baseURL}${endpoint}?${query}`;
+    }
+
     private async request<T>(
         endpoint: string,
-        options: RequestInit = {}
+        options: RequestInit = {},
+        params?: Record<string, any>
     ): Promise<ApiResponse<T>> {
-        const url = `${this.baseURL}${endpoint}`;
+        const url = this.buildUrl(endpoint, params);
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.timeout);
@@ -37,10 +46,10 @@ class ApiClient {
 
             clearTimeout(timeoutId);
 
-            const data = await response.json();
+            const data = await response.json() as T;
 
             if (!response.ok) {
-                throw new Error(data.message || `HTTP ${response.status}`);
+                throw new Error((data as any)?.message || `HTTP ${response.status}`);
             }
 
             return {
@@ -55,26 +64,19 @@ class ApiClient {
         }
     }
 
-    get<T>(endpoint: string) {
-        return this.request<T>(endpoint, { method: 'GET' });
+    get<T>(endpoint: string, params?: Record<string, any>) {
+        return this.request<T>(endpoint, { method: 'GET' }, params);
     }
 
-    post<T>(endpoint: string, body: any) {
-        return this.request<T>(endpoint, {
-            method: 'POST',
-            body: JSON.stringify(body),
-        });
-    }
-
-    put<T>(endpoint: string, body: any) {
-        return this.request<T>(endpoint, {
-            method: 'PUT',
-            body: JSON.stringify(body),
-        });
-    }
-
-    delete<T>(endpoint: string) {
-        return this.request<T>(endpoint, { method: 'DELETE' });
+    post<T>(endpoint: string, body: any, params?: Record<string, any>) {
+        return this.request<T>(
+            endpoint,
+            {
+                method: 'POST',
+                body: JSON.stringify(body),
+            },
+            params
+        );
     }
 }
 

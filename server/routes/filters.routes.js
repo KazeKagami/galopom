@@ -8,6 +8,6 @@ router.get('/cities', sortingFeaturesControllers.cities);
 router.get('/countries', sortingFeaturesControllers.countries);
 router.get('/architects', sortingFeaturesControllers.architects);
 router.get('/sculptors', sortingFeaturesControllers.sculptors);
-router.get('/ideaAuthors', sortingFeaturesControllers.ideaAuthors);
+router.get('/idea_authors', sortingFeaturesControllers.ideaAuthors);
 
 module.exports = router;

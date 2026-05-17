@@ -17,8 +17,8 @@ const attractionSchema = new mongoose.Schema({
         default: ''
     },
     kind: {
-        type: String,
-        default: ''
+        type: [String],
+        default: []
     },
     idea_author: {
         type: String,

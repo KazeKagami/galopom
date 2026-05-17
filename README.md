@@ -5,6 +5,7 @@ npx expo start -c
 
 #запуск обычный
 npx expo start
+npx start
 ```
 ***
 # **Server**

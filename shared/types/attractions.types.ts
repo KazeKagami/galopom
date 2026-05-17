@@ -2,12 +2,12 @@ export type Attraction = {
     m_id: number;
     title: string;
     other_titles?: string;
-    type?: string;
+    kind?: string;
     idea_author?: string;
     architector?: string;
     sculptor?: string;
     year_arise?: number;
-    country?: string;
+    country: string;
     city: string;
     address?: string;
     description?: string;
