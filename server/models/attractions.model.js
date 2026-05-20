@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const attractionSchema = new mongoose.Schema({
-    // Ваш id из CSV становится _id
     m_id: {
         type: Number,
         unique: true,

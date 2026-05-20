@@ -2,23 +2,15 @@ const express = require('express');
 const router = express.Router();
 const attractionController = require('../controllers/attraction.controller');
 
-// GET /api/attractions - все достопримечательности
-router.get('/', attractionController.getAllAttractions);
+router.get('/', attractionController.getAttractions);
+router.post('/filter', attractionController.getAttractions);
 
-router.post('/filter', attractionController.filterAttractions);
+router.get('/city/:city', attractionController.getAttractions);
+router.get('/year/:year', attractionController.getAttractions);
+router.get('/kind/:kind', attractionController.getAttractions)
 
-// GET /api/attractions/city/:city - по городу
-router.get('/city/:city', attractionController.getAttractionsByCity);
-
-// GET /api/attractions/year/:year - по году
-router.get('/year/:year', attractionController.getAttractionsByYear);
-
-router.get('/kind/:kind', attractionController.getAttractionsByKind)
-
-// GET /api/attractions/:id - одна по ID
 router.get('/:m_id', attractionController.getAttractionById);
 
-// POST /api/attractions - создать
 router.post('/', attractionController.createAttraction);
 
 /*// PUT /api/attractions/:id - обновить

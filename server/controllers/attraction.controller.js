@@ -1,14 +1,30 @@
 const attractionService = require('../services/attraction.service');
 
-// Получить все
-const getAllAttractions = async (req, res, next) => {
+const getAttractions = async (req, res, next) => {
     try {
         const options = {
             sort: req.query.sort,
             order: req.query.order,
             limit: req.query.limit ? parseInt(req.query.limit) : undefined,
-            skip: req.query.skip ? parseInt(req.query.skip) : undefined
+            skip: req.query.skip ? parseInt(req.query.skip) : undefined,
+            filter: {}
         };
+        
+        if (req.body && Object.keys(req.body).length > 0) {
+            options.filter = buildFilterFromBody(req.body);
+        } 
+        else if (req.params.city) {
+            options.filter.city = req.params.city;
+        }
+        else if (req.params.year) {
+            options.filter.year_arise = parseInt(req.params.year);
+        }
+        else if (req.params.kind) {
+            options.filter.kind = req.params.kind;
+        }
+        else {
+            options.filter = buildFilterFromQuery(req.query);
+        }
 
         const data = await attractionService.getAllAttractions(options);
         res.status(200).json(data);
@@ -17,116 +33,56 @@ const getAllAttractions = async (req, res, next) => {
     }
 };
 
-// НОВЫЙ МЕТОД: фильтрация по множеству параметров
-const filterAttractions = async (req, res, next) => {
-    try {
-        const filters = req.body; // Получаем фильтры из тела запроса
-        const options = {
-            sort: req.query.sort,
-            order: req.query.order,
-            limit: req.query.limit ? parseInt(req.query.limit) : undefined,
-            skip: req.query.skip ? parseInt(req.query.skip) : undefined
-        };
-
-        // Строим объект фильтрации для MongoDB
-        const filterQuery = {};
-
-        // Фильтр по типам (kinds) - множественный выбор
-        if (filters.kinds && filters.kinds.length > 0) {
-            // Ищем документы, у которых kind совпадает с любым из выбранных
-            filterQuery.kind = { $in: filters.kinds };
-        }
-
-        // Фильтр по городам - множественный выбор
-        if (filters.cities && filters.cities.length > 0) {
-            filterQuery.city = { $in: filters.cities };
-        }
-
-        // Фильтр по странам - множественный выбор
-        if (filters.countries && filters.countries.length > 0) {
-            filterQuery.country = { $in: filters.countries };
-        }
-
-        // Фильтр по архитекторам - множественный выбор
-        if (filters.architects && filters.architects.length > 0) {
-            filterQuery.architect = { $in: filters.architects };
-        }
-
-        // Фильтр по скульпторам - множественный выбор
-        if (filters.sculptors && filters.sculptors.length > 0) {
-            filterQuery.sculptor = { $in: filters.sculptors };
-        }
-
-        // Фильтр по авторам идей - множественный выбор
-        if (filters.ideaAuthors && filters.ideaAuthors.length > 0) {
-            filterQuery.idea_author = { $in: filters.ideaAuthors };
-        }
-
-        console.log('Filter query:', filterQuery);
-
-        options.filter = filterQuery;
-        const data = await attractionService.getAllAttractions(options);
-        res.status(200).json(data);
-    } catch (error) {
-        next(error);
+// Вспомогательная функция: фильтры из body (для POST /filter)
+const buildFilterFromBody = (filters) => {
+    const filterQuery = {};
+    
+    if (filters.kinds?.length > 0) {
+        filterQuery.kind = { $in: filters.kinds };
     }
+    if (filters.cities?.length > 0) {
+        filterQuery.city = { $in: filters.cities };
+    }
+    if (filters.countries?.length > 0) {
+        filterQuery.country = { $in: filters.countries };
+    }
+    if (filters.architects?.length > 0) {
+        filterQuery.architect = { $in: filters.architects };
+    }
+    if (filters.sculptors?.length > 0) {
+        filterQuery.sculptor = { $in: filters.sculptors };
+    }
+    if (filters.ideaAuthors?.length > 0) {
+        filterQuery.idea_author = { $in: filters.ideaAuthors };
+    }
+    
+    return filterQuery;
 };
 
-const getAttractionsByCity = async (req, res, next) => {
-    try {
-        const city = req.params.city;
-
-        const options = {
-            filter: { city: city },
-            sort: req.query.sort,
-            order: req.query.order,
-            limit: req.query.limit ? parseInt(req.query.limit) : undefined,
-            skip: req.query.skip ? parseInt(req.query.skip) : undefined
-        };
-
-        const data = await attractionService.getAllAttractions(options);
-        res.status(200).json(data);
-    } catch (error) {
-        next(error);
+// Вспомогательная функция: фильтры из query параметров (для GET /)
+const buildFilterFromQuery = (query) => {
+    const filterQuery = {};
+    
+    if (query.kinds) {
+        filterQuery.kind = { $in: query.kinds.split(',') };
     }
-};
-
-const getAttractionsByYear = async (req, res, next) => {
-    try {
-        const year = parseInt(req.params.year);
-
-        const options = {
-            filter: { year_arise: year },
-            sort: req.query.sort,
-            order: req.query.order,
-            limit: req.query.limit ? parseInt(req.query.limit) : undefined,
-            skip: req.query.skip ? parseInt(req.query.skip) : undefined
-        };
-
-        const data = await attractionService.getAllAttractions(options);
-        res.status(200).json(data);
-    } catch (error) {
-        next(error);
+    if (query.cities) {
+        filterQuery.city = { $in: query.cities.split(',') };
     }
-};
-
-const getAttractionsByKind = async (req, res, next) => {
-    try {
-        const kind = req.params.kind;
-
-        const options = {
-            filter: { kind: kind },
-            sort: req.query.sort,
-            order: req.query.order,
-            limit: req.query.limit ? parseInt(req.query.limit) : undefined,
-            skip: req.query.skip ? parseInt(req.query.skip) : undefined
-        };
-
-        const data = await attractionService.getAllAttractions(options);
-        res.status(200).json(data);
-    } catch (error) {
-        next(error);
+    if (query.countries) {
+        filterQuery.country = { $in: query.countries.split(',') };
     }
+    if (query.architects) {
+        filterQuery.architect = { $in: query.architects.split(',') };
+    }
+    if (query.sculptors) {
+        filterQuery.sculptor = { $in: query.sculptors.split(',') };
+    }
+    if (query.ideaAuthors) {
+        filterQuery.idea_author = { $in: query.ideaAuthors.split(',') };
+    }
+    
+    return filterQuery;
 };
 
 const getAttractionById = async (req, res, next) => {
@@ -153,11 +109,7 @@ const createAttraction = async (req, res, next) => {
 };
 
 module.exports = {
-    getAllAttractions,
-    filterAttractions, // НОВЫЙ ЭКСПОРТ
+    getAttractions,
     getAttractionById,
-    getAttractionsByCity,
-    getAttractionsByYear,
-    getAttractionsByKind,
     createAttraction
 };

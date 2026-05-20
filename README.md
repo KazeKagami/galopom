@@ -1,4 +1,4 @@
-# **Client**
+## **Client**
 ```bash
 #запуск с очисткой кэша
 npx expo start -c
@@ -8,7 +8,11 @@ npx expo start
 npx start
 ```
 ***
-# **Server**
+## **Server**
 ```bash
 node app.js
 ```
+
+## Docs [RU]
+* [server](/server/README.md)
+* [shared](/shared/README.md)
