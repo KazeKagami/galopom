@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
@@ -17,6 +17,11 @@ export default function HomeScreen() {
           style={styles.reactLogo}
         />
       }>
+      <View>
+        <Text style={{ fontSize: 24, fontStyle: 'italic', fontWeight: 'bold' }}>
+          Этот проект находится на разработке, и не является законченым продуктом! Сервак для теста и доступа без локалки
+        </Text>
+      </View>
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />

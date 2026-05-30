@@ -58,7 +58,12 @@ export default function Attraction_test_design() {
 
     if (loading) {
         return (
-            <SafeAreaView style={[styles.container]}>
+            <SafeAreaView style={[styles.cont]}>
+                <View>
+                    <Text style={{ fontSize: 24, fontStyle: 'italic', fontWeight: 'bold' }}>
+                        Этот проект находится на разработке, и не является законченым продуктом! Сервак для теста и доступа без локалки
+                    </Text>
+                </View>
                 <View>
                     <ActivityIndicator size="large" />
                     <Text>Загрузка достопримечательностей...</Text>
@@ -70,7 +75,12 @@ export default function Attraction_test_design() {
     // Отображение ошибки
     if (error) {
         return (
-            <SafeAreaView style={[styles.container]}>
+            <SafeAreaView style={[styles.cont]}>
+                <View>
+                    <Text style={{ fontSize: 24, fontStyle: 'italic', fontWeight: 'bold' }}>
+                        Этот проект находится на разработке, и не является законченым продуктом! Сервак для теста и доступа без локалки
+                    </Text>
+                </View>
                 <View>
                     <Text>
                         ⚠️ {error}
@@ -125,6 +135,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         flexDirection: 'row',
+    },
+    cont: {
+        flex: 1
     },
     main_block: {
         flex: 1,

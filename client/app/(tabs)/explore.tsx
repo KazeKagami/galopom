@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Fonts } from '@/constants/theme';
+import { View, Text } from 'react-native';
 
 export default function TabTwoScreen() {
   return (
@@ -21,6 +22,11 @@ export default function TabTwoScreen() {
           style={styles.headerImage}
         />
       }>
+      <View>
+        <Text style={{ fontSize: 24, fontStyle: 'italic', fontWeight: 'bold' }}>
+          Этот проект находится на разработке, и не является законченым продуктом! Сервак для теста и доступа без локалки
+        </Text>
+      </View>
       <ThemedView style={styles.titleContainer}>
         <ThemedText
           type="title"
