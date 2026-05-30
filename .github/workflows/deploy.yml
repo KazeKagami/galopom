@@ -47,7 +47,7 @@ jobs:
             npm run build:web
 
             # Проверяем, что сборка создалась
-            if [ ! -d "build" ]; then
+            if [ ! -d "dist" ]; then
                 echo "❌ Ошибка: папка build не создалась!"
                 rm $LOCKFILE
                 exit 1
