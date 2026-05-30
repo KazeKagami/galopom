@@ -1,5 +1,5 @@
 const Attraction = require('../models/attractions.model');
-const getNextId = require('../../shared/utils/getNextId');
+const getNextId = require('../utils/getNextID')
 
 const getNextMId = () => getNextId(Attraction, 'm_id');
 

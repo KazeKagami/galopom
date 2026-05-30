@@ -1,5 +1,5 @@
 import { apiClient } from "@/services/api.client";
-import { baseSort } from "../../../shared/types/baseSort.types"
+import { baseSort } from "../../types/baseSort.types"
 
 export const getKinds = () => apiClient.get<baseSort[]>('/filter/kinds');
 

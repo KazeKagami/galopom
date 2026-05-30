@@ -4,7 +4,7 @@ import { AttractionCard } from "@/components/attraction-card";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Attraction } from "../../../shared/types/attractions.types";
+import { Attraction } from "../../types/attractions.types";
 import { getAttractions } from "@/features/attractions/attractions.api";
 
 

@@ -1,6 +1,6 @@
 // features/attractions/attractions.api.ts
 
-import { Attraction } from '../../../shared/types/attractions.types';
+import { Attraction } from '../../types/attractions.types';
 import { apiClient } from '../../services/api.client';
 
 type QueryParams = {

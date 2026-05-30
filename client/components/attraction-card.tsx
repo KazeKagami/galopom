@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { StyleSheet, useColorScheme, View, Text } from "react-native";
-import { Attraction } from "../../shared/types/attractions.types";
+import { Attraction } from "../types/attractions.types";
 
 interface ItemProps {
     item: Attraction;
