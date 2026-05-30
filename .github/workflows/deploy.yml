@@ -1,0 +1,64 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [master]  # у тебя master, оставляем
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Блокировка от параллельных деплоев
+            LOCKFILE="/tmp/deploy.lock"
+            if [ -f "$LOCKFILE" ]; then
+                echo "⚠️ Деплой уже идёт, пропускаем этот запуск"
+                exit 0
+            fi
+            touch $LOCKFILE
+
+            echo "🚀 Начинаем деплой..."
+
+            # Переходим в проект
+            cd /var/www/galopom
+
+            # Забираем изменения
+            echo "📦 git pull..."
+            git pull origin master
+
+            # Обновляем бэкенд
+            echo "📦 Обновляем бэкенд..."
+            cd server
+            npm install
+            pm2 restart galopom-backend || pm2 start server.js --name galopom-backend
+
+            # Обновляем фронтенд
+            echo "📦 Обновляем фронтенд..."
+            cd ../client
+            npm install
+            npm run build:web
+
+            # Проверяем, что сборка создалась
+            if [ ! -d "build" ]; then
+                echo "❌ Ошибка: папка build не создалась!"
+                rm $LOCKFILE
+                exit 1
+            fi
+
+            # Перезапускаем Nginx (он сам подхватит новые файлы)
+            echo "🔄 Перезапускаем Nginx..."
+            sudo nginx -t
+            sudo systemctl reload nginx  # reload лучше чем restart (без разрыва соединений)
+
+            # Снимаем блокировку
+            rm $LOCKFILE
+
+            echo "✅ Деплой успешно завершён!"
