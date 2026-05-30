@@ -6,6 +6,7 @@ import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View, Text }
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Attraction } from "../../types/attractions.types";
 import { getAttractions } from "@/features/attractions/attractions.api";
+import { Link, router } from "expo-router";
 
 
 const cols = 2;
@@ -118,7 +119,9 @@ export default function Attraction_test_design() {
                         columnWrapperStyle={{ gap: 8 }}
                         renderItem={({ item }) => (
                             <View style={{ flex: 1, height: 150 }}>
-                                <AttractionCard item={item} numColumns={cols} />
+                                <TouchableOpacity onPress={() => router.push(`/attractions/${item.m_id}`)}>
+                                    <AttractionCard item={item} numColumns={cols} />
+                                </TouchableOpacity>
                             </View>
                         )}
                         showsVerticalScrollIndicator={false}
