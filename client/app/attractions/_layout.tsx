@@ -9,9 +9,3 @@ export default function AttractionsLayout() {
         />
     );
 }
-
-// Добавьте эту настройку для очистки параметров
-export const unstable_settings = {
-    // Очищает query параметры при навигации
-    initialRouteName: '[id]',
-};
