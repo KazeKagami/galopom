@@ -1,4 +1,4 @@
-const getSortItems = require("../services/filters.service");
+const getSortItems = require("../services/filter.service");
 const models = require("../models/baseFilter.model");
 
 // Фабрика — создаёт обработчик для любой модели

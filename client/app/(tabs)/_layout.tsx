@@ -3,16 +3,16 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import Feather from '@expo/vector-icons/Feather';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { user, isAuthenticated } = useAuth();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarPosition: "top",
@@ -31,6 +31,15 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="[username]"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <Feather name="user" size={24} color={color} />,
+          href: isAuthenticated && user?.username
+            ? `/${user.username}`
+            : '/auth/login',
+        }} />
     </Tabs>
   );
 }

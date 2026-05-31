@@ -1,13 +1,15 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+const cookieParser = require('cookie-parser');
 
 const connectDB = require('./config/db');  // ← импорт подключения
 
 // Подключаем маршруты
-const attractionRoutes = require('./routes/attractions.routes');
-const sortRoutes = require('./routes/filters.routes');
-//const authRoutes = require('./routes/auth')
+const attractionRoutes = require('./routes/attraction.routes');
+const sortRoutes = require('./routes/filter.routes');
+const userRoutes = require('./routes/user.routes');
+const authRoutes = require('./routes/auth.routes')
 
 const app = express();
 
@@ -15,31 +17,34 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Подключение к MongoDB
 connectDB();
-
-// Маршруты
-app.use('/api/attractions', attractionRoutes);
-app.use('/api/filter', sortRoutes);
-//app.use("/api/auth", authRoutes)
 
 // Базовый маршрут для проверки
 app.get('/api', (req, res) => {
     res.json({ message: 'API Галопом по Европам работает!' });
 });
 
+// Маршруты
+app.use('/api/attractions', attractionRoutes);
+app.use('/api/filter', sortRoutes);
+app.use('/api/users', userRoutes);
+app.use("/api/auth", authRoutes)
+
+app.use((err, req, res, next) => {
+    const status = err.statusCode || 500;
+    res.status(status).json({
+        success: false,
+        message: err.message,
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
+});
+
 // Обработка 404
 app.use((req, res) => {
     res.status(404).json({ message: 'Маршрут не найден' });
-});
-
-app.use((err, req, res, next) => {
-    console.error('🔥 Ошибка:', err);
-
-    res.status(err.status || 500).json({
-        message: err.message || 'Ошибка сервера',
-    });
 });
 
 // Запуск сервера

@@ -1,118 +1,174 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { AttractionCard } from "@/components/attraction-card";
+//import { FiltersCard } from "@/components/filters-card";
+//import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View, Text } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Attraction } from "../../types/attractions.types";
+import { getAttractions } from "@/features/attractions/attractions.api";
+import { Link, router } from "expo-router";
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
-import { View, Text } from 'react-native';
 
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <View>
-        <Text style={{ fontSize: 24, fontStyle: 'italic', fontWeight: 'bold' }}>
-          Этот проект находится на разработке, и не является законченым продуктом! Сервак для теста и доступа без локалки
-        </Text>
-      </View>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
-  );
+const cols = 2;
+
+export default function AttractionsExploreScreen() {
+    const [attractions, setAttractions] = useState<Attraction[]>([]);
+    const [sort, setSortBy] = useState<'title' | 'm_id'>('title');
+    const [order, setOrderBy] = useState<'asc' | 'desc'>('asc');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchAttractions = async () => {
+        try {
+            setError(null);
+            setLoading(true);
+
+            const params = {
+                sort,
+                order
+            };
+
+            let resp = await getAttractions(params);
+
+            setAttractions(resp);
+        }
+        catch (err: any) {
+            setError(err.message);
+        }
+        finally {
+            setLoading(false);
+            setRefreshing(false)
+        }
+    }
+
+    useEffect(() => {
+        console.log(sort, order);
+        fetchAttractions()
+    }, [sort, order])
+
+    const handleSort = (field: 'title' | 'm_id') => {
+        if (sort === field) {
+            setOrderBy(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortBy(field);
+            setOrderBy('asc');
+        }
+    };
+
+
+    if (loading) {
+        return (
+            <SafeAreaView style={[styles.cont]}>
+                <View>
+                    <Text style={{ fontSize: 24, fontStyle: 'italic', fontWeight: 'bold' }}>
+                        Этот проект находится на разработке, и не является законченым продуктом! Сервак для теста и доступа без локалки
+                    </Text>
+                </View>
+                <View>
+                    <ActivityIndicator size="large" />
+                    <Text>Загрузка достопримечательностей...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    // Отображение ошибки
+    if (error) {
+        return (
+            <SafeAreaView style={[styles.cont]}>
+                <View>
+                    <Text style={{ fontSize: 24, fontStyle: 'italic', fontWeight: 'bold' }}>
+                        Этот проект находится на разработке, и не является законченым продуктом! Сервак для теста и доступа без локалки
+                    </Text>
+                </View>
+                <View>
+                    <Text>
+                        ⚠️ {error}
+                    </Text>
+                    <TouchableOpacity onPress={fetchAttractions}>
+                        <Text>Повторить</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+
+    return (
+        <SafeAreaView style={{ flex: 1 }}>
+            <View style={styles.container}>
+                <View style={styles.main_block}>
+                    <View style={styles.header}>
+                        <Text style={styles.main_block_title}>Достопримечательности</Text>
+                        <Text style={styles.main_block_subtitle}>Найдено {attractions.length} объектов</Text>
+                    </View>
+                    <View style={styles.sort_line}>
+                        <TouchableOpacity
+                            onPress={() => handleSort('m_id')}>
+                            <Text>ID {sort === 'm_id' ? (order === 'asc' ? '↑' : '↓') : ''}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => handleSort('title')}>
+                            <Text>Название {sort === 'title' ? (order === 'asc' ? '↑' : '↓') : ''}</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <FlatList
+                        data={attractions}
+                        numColumns={cols}
+                        columnWrapperStyle={{ gap: 8 }}
+                        renderItem={({ item }) => (
+                            <View style={{ flex: 1, height: 150 }}>
+                                <TouchableOpacity onPress={() => router.push(`/attractions/${item.m_id}`)}>
+                                    <AttractionCard item={item} numColumns={cols} />
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                        showsVerticalScrollIndicator={false}
+                        keyExtractor={(item) => item.m_id.toString()}
+                        style={{ padding: 15 }}
+                    />
+                </View>
+            </View>
+        </SafeAreaView>
+    )
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
+    container: {
+        flex: 1,
+        flexDirection: 'row',
+    },
+    cont: {
+        flex: 1
+    },
+    main_block: {
+        flex: 1,
+        marginBottom: 10,
+        marginTop: 5,
+        marginLeft: 100,
+        marginRight: 100,
+        borderRadius: 25
+    },
+    header: {
+        flexDirection: 'row',
+        paddingLeft: 15,
+        paddingBottom: 5,
+        paddingTop: 5,
+        justifyContent: 'space-between',
+
+    },
+    main_block_title: {
+        fontWeight: 'bold',
+        fontSize: 24
+    },
+    main_block_subtitle: {
+        opacity: 0.5
+    },
+    sort_line: {
+        flexDirection: 'row',
+        paddingLeft: 15,
+        opacity: 0.5,
+        gap: 10
+    }
+})

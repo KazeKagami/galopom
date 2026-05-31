@@ -7,7 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AttractionDetailScreen() {
     // ✅ Получаем id из URL
-    const { id } = useLocalSearchParams<{ id: string }>();
+    const { m_id } = useLocalSearchParams<{ m_id: string }>();
     const router = useRouter();
 
     const [attraction, setAttraction] = useState<Attraction | null>(null);
@@ -18,7 +18,7 @@ export default function AttractionDetailScreen() {
     const [isTrivia, setIstriviaOpen] = useState(true);
 
     const fetchAttraction = async () => {
-        if (!id) {
+        if (!m_id) {
             setError('ID не указан');
             setLoading(false);
             return;
@@ -29,9 +29,9 @@ export default function AttractionDetailScreen() {
             setLoading(true);
 
             // ✅ Преобразуем string в number
-            const attractionId = parseInt(id, 10);
+            const attractionId = parseInt(m_id, 10);
             const resp = await getAttractionById(attractionId);
-            setAttraction(resp.data);
+            setAttraction(resp);
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -41,7 +41,7 @@ export default function AttractionDetailScreen() {
 
     useEffect(() => {
         fetchAttraction();
-    }, [id]);
+    }, [m_id]);
 
     if (loading) {
         return (

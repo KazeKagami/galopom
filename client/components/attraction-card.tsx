@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { StyleSheet, useColorScheme, View, Text } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 import { Attraction } from "../types/attractions.types";
 
 interface ItemProps {
@@ -15,8 +15,6 @@ const truncateText = (text: string | undefined, maxLength: number): string => {
 
 // Компонент карточки достопримечательности с адаптивной длиной
 export function AttractionCard({ item, numColumns }: ItemProps) {
-    const colorScheme = useColorScheme();
-    const isDark = colorScheme === 'dark';
 
     // Определяем ограничения в зависимости от количества столбцов
     const limits = useMemo(() => {
@@ -47,7 +45,7 @@ export function AttractionCard({ item, numColumns }: ItemProps) {
     }, [item.city, item.country]);
 
     return (
-        <View style={[styles.card, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+        <View style={styles.card}>
             <Text style={styles.cardTitle} numberOfLines={numColumns === 1 ? 3 : 2}>
                 {truncateText(item.title, limits.title)}
             </Text>

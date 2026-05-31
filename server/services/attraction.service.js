@@ -1,4 +1,4 @@
-const Attraction = require('../models/attractions.model');
+const Attraction = require('../models/attraction.model');
 const getNextId = require('../utils/getNextID')
 
 const getNextMId = () => getNextId(Attraction, 'm_id');

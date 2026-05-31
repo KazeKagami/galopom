@@ -1,7 +1,7 @@
 // routes/filterOp.js
 const express = require('express');
 const router = express.Router();
-const sortingFeaturesControllers = require("../controllers/filters.controller");
+const sortingFeaturesControllers = require("../controllers/filter.controller");
 
 router.get('/kinds', sortingFeaturesControllers.kinds);
 router.get('/cities', sortingFeaturesControllers.cities);
