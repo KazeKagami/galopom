@@ -21,6 +21,40 @@ const getUserByUsername = async (req, res, next) => {
     }
 };
 
+const updateMyProfile = async (req, res, next) => {
+    try {
+        console.log('=== UPDATE PROFILE DEBUG ===');
+        console.log('Headers:', req.headers);
+        console.log('User from token:', req.user);
+        console.log('Request body:', req.body);
+
+        const username = req.user.username;
+        const updateData = req.body;
+
+        console.log('Username from token:', username);
+        console.log('Update data:', updateData);
+
+        const updatedUser = await userService.updateUserProfile(
+            username,
+            updateData,
+            req.user
+        );
+
+        console.log('Updated user result:', updatedUser);
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.error('ERROR in updateMyProfile:');
+        console.error('Message:', error.message);
+        console.error('Stack:', error.stack);
+
+        // Отправляем подробную ошибку клиенту
+        res.status(500).json({
+            error: error.message,
+            details: error.stack
+        });
+    }
+};
+
 /*const uploadUserAvatar = async (req, res, next) => {
     try {
         const { username } = req.params;
@@ -56,5 +90,6 @@ const getUserByUsername = async (req, res, next) => {
 module.exports = {
     getAllUsers,
     getUserByUsername,
+    updateMyProfile,
     //uploadUserAvatar
 };

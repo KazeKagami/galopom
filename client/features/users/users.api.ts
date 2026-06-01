@@ -13,6 +13,16 @@ export const getUserByUsername = async (username: string): Promise<UserResponse>
     return response;
 };
 
+export const updateMyProfile = async (data: {
+    username?: string | null;
+    email?: string | null;
+    avatar?: string | null;
+}): Promise<UserResponse> => {
+    console.log('Updating profile with data:', data);
+    const response = await apiClient.put<UserResponse>('/users/me', data);
+    return response;
+};
+
 /*export const uploadAvatar = async (username: string, imageUri: string): Promise<{ avatarUrl: string }> => {
     const token = await getToken();
 

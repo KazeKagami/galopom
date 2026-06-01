@@ -17,9 +17,9 @@ export default function HomeScreen() {
       <Text>👑 Роль: {user?.role}</Text>
       <Text>✅ Сессия активна</Text>
 
-      <TouchableOpacity>
+      {/*<TouchableOpacity>
         <Text>Выйти</Text>
-      </TouchableOpacity>
+      </TouchableOpacity>*/}
     </View>
   );
 }

@@ -5,7 +5,8 @@ const tokenSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Users',
-        required: true
+        required: true,
+        index: true
     },
     token: {
         type: String,
@@ -17,5 +18,7 @@ const tokenSchema = new mongoose.Schema({
         expires: 604800 // 7 дней
     }
 });
+
+tokenSchema.index({ userId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Token', tokenSchema);

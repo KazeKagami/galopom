@@ -9,7 +9,7 @@ const connectDB = require('./config/db');  // ← импорт подключе�
 const attractionRoutes = require('./routes/attraction.routes');
 const sortRoutes = require('./routes/filter.routes');
 const userRoutes = require('./routes/user.routes');
-const authRoutes = require('./routes/auth.routes')
+const authRoutes = require('./routes/auth.routes');
 
 const app = express();
 
@@ -31,7 +31,7 @@ app.get('/api', (req, res) => {
 app.use('/api/attractions', attractionRoutes);
 app.use('/api/filter', sortRoutes);
 app.use('/api/users', userRoutes);
-app.use("/api/auth", authRoutes)
+app.use("/api/auth", authRoutes);
 
 app.use((err, req, res, next) => {
     const status = err.statusCode || 500;

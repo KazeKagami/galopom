@@ -1,10 +1,11 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import Feather from '@expo/vector-icons/Feather';
 import { useAuth } from '@/hooks/use-auth';
+import { TouchableOpacity } from 'react-native';
 
 export default function TabLayout() {
   const { user, isAuthenticated } = useAuth();
@@ -34,11 +35,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="[username]"
         options={{
+          title: "Users"
+        }} />
+      <Tabs.Screen
+        name="me"
+        options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => <Feather name="user" size={24} color={color} />,
-          href: isAuthenticated && user?.username
-            ? `/${user.username}`
-            : '/auth/login',
         }} />
     </Tabs>
   );

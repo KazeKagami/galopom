@@ -29,6 +29,9 @@ class ApiClient {
 
         if (this.accessToken) {
             headers['Authorization'] = `Bearer ${this.accessToken}`;
+            console.log('✅ Token set in headers:', this.accessToken.substring(0, 20) + '...');
+        } else {
+            console.error('❌ NO ACCESS TOKEN in apiClient!');
         }
 
         return headers;
