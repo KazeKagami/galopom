@@ -1,17 +1,20 @@
 // hooks/use-auth.ts
 import { useState, useEffect } from 'react';
 import { authApi } from '@/features/auth/auth.api';
-import { apiClient } from '@/services/api.client';
-import { getAccessToken, getRefreshToken, saveToken, removeToken } from '@/utils/token-storage';
-import { AuthState } from '@/types/auth.types';
+import { getAccessToken, getRefreshToken, saveTokens, removeTokens } from '@/utils/token-storage';
+import { router } from 'expo-router';
+
+interface User {
+    id: string;
+    username: string;
+    email: string;
+    role: string;
+}
 
 export const useAuth = () => {
-    const [state, setState] = useState<AuthState>({
-        user: null,
-        accessToken: null,
-        isAuthenticated: false,
-        isLoading: true
-    });
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
         checkAuth();
@@ -19,120 +22,106 @@ export const useAuth = () => {
 
     const checkAuth = async () => {
         try {
-            const accessToken = await getAccessToken();
+            const token = await getAccessToken();
 
-            if (accessToken) {
-                apiClient.setAccessToken(accessToken);
-
-                try {
-                    const response = await authApi.getMe();
-                    setState({
-                        user: response.user,
-                        accessToken: accessToken,
-                        isAuthenticated: true,
-                        isLoading: false
-                    });
-                } catch (error: any) {
-                    // Токен истек, пробуем обновить
-                    if (error.message?.includes('expired') || error.message?.includes('401')) {
-                        console.log('Token expired, trying to refresh...');
-                        const newAccessToken = await refreshAccessToken();
-
-                        if (newAccessToken) {
-                            apiClient.setAccessToken(newAccessToken);
-                            const response = await authApi.getMe();
-                            setState({
-                                user: response.user,
-                                accessToken: newAccessToken,
-                                isAuthenticated: true,
-                                isLoading: false
-                            });
-                        } else {
-                            await logout();
-                        }
-                    } else {
-                        throw error;
-                    }
-                }
-            } else {
-                setState(prev => ({ ...prev, isLoading: false }));
+            if (token) {
+                const response = await authApi.getMe(token);
+                setUser(response.user);
+                setIsAuthenticated(true);
             }
         } catch (error) {
             console.error('Auth check failed:', error);
-            await logout();
+            await tryRefreshToken();
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const refreshAccessToken = async (): Promise<string | null> => {
+    const tryRefreshToken = async () => {
         try {
             const refreshToken = await getRefreshToken();
+
             if (!refreshToken) {
                 console.log('No refresh token available');
-                return null;
+                await logout();
+                return false;
             }
 
+            console.log('Attempting to refresh token...');
             const response = await authApi.refreshToken(refreshToken);
-            await saveToken(response.accessToken, refreshToken);
-            return response.accessToken;
+
+            if (response.accessToken) {
+                // Сохраняем новый access token, refresh token оставляем тот же
+                await saveTokens(response.accessToken, refreshToken);
+
+                // Повторно получаем данные пользователя
+                const userResponse = await authApi.getMe(response.accessToken);
+                setUser(userResponse.user);
+                setIsAuthenticated(true);
+                return true;
+            }
+
+            return false;
         } catch (error) {
             console.error('Refresh failed:', error);
-            return null;
+            await logout();
+            return false;
         }
     };
 
     const login = async (email: string, password: string) => {
-        const response = await authApi.login({ email, password });
-
-        // Сохраняем оба токена
-        await saveToken(response.accessToken, response.refreshToken);
-        apiClient.setAccessToken(response.accessToken);
-
-        setState({
-            user: response.user,
-            accessToken: response.accessToken,
-            isAuthenticated: true,
-            isLoading: false
-        });
-
-        return response;
-    };
-
-    const register = async (username: string, email: string, password: string) => {
-        const response = await authApi.register({ username, email, password });
-
-        // Сохраняем оба токена
-        await saveToken(response.accessToken, response.refreshToken);
-        apiClient.setAccessToken(response.accessToken);
-
-        setState({
-            user: response.user,
-            accessToken: response.accessToken,
-            isAuthenticated: true,
-            isLoading: false
-        });
-
-        return response;
-    };
-
-    const logout = async () => {
+        setIsLoading(true);
         try {
-            await authApi.logout();
+            const response = await authApi.login({ email, password });
+
+            if (response.accessToken && response.refreshToken) {
+                await saveTokens(response.accessToken, response.refreshToken);
+                setUser(response.user);
+                setIsAuthenticated(true);
+                return response;
+            } else {
+                throw new Error('No tokens received');
+            }
         } catch (error) {
-            console.error('Logout error:', error);
+            console.error('Login error:', error);
+            throw error;
         } finally {
-            await removeToken();
-            apiClient.setAccessToken(null);
-            setState({
-                user: null,
-                accessToken: null,
-                isAuthenticated: false,
-                isLoading: false
-            });
+            setIsLoading(false);
         }
     };
 
+    const register = async (username: string, email: string, password: string) => {
+        setIsLoading(true);
+        try {
+            const response = await authApi.register({ username, email, password });
+
+            if (response.accessToken && response.refreshToken) {
+                await saveTokens(response.accessToken, response.refreshToken);
+                setUser(response.user);
+                setIsAuthenticated(true);
+                return response;
+            } else {
+                throw new Error('No tokens received');
+            }
+        } catch (error) {
+            console.error('Register error:', error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const logout = async () => {
+        await removeTokens();
+        setUser(null);
+        setIsAuthenticated(false);
+        router.replace('/auth/login');
+    };
+
     return {
-        ...state,
+        user,
+        isLoading,
+        isAuthenticated,
         login,
         register,
         logout,

@@ -1,6 +1,6 @@
 // services/api.client.ts
 import { API_URL } from '../config/api.config';
-import { getToken, saveToken, removeToken, getRefreshToken } from '@/utils/token-storage';
+import { getAccessToken, saveToken, removeToken, getRefreshToken, saveRefreshToken } from '@/utils/token-storage';
 
 class ApiClient {
     private baseURL: string;
@@ -19,7 +19,7 @@ class ApiClient {
     private async refreshToken(): Promise<string | null> {
         console.log('🔄 Trying to refresh token...');
         try {
-            const refreshToken = await getRefreshToken(); // 👈 Получаем из storage
+            const refreshToken = await getRefreshToken();
 
             if (!refreshToken) {
                 console.log('No refresh token available');
@@ -31,13 +31,15 @@ class ApiClient {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ refreshToken }) // 👈 Отправляем в теле
+                body: JSON.stringify({ refreshToken })
             });
 
             if (response.ok) {
                 const data = await response.json();
                 this.accessToken = data.accessToken;
-                await saveToken(data.accessToken, refreshToken); // Сохраняем оба
+                // Исправлено: сохраняем только accessToken
+                await saveToken(data.accessToken);
+                await saveRefreshToken(refreshToken);
                 console.log('✅ Token refreshed successfully');
                 return data.accessToken;
             }
@@ -63,21 +65,25 @@ class ApiClient {
     }
 
     private async fetchWithAuth(url: string, options: RequestInit): Promise<Response> {
-        // Проверяем, не пора ли обновить токен
-        if (!this.accessToken) {
-            const storedToken = await getToken();
-            if (storedToken) {
-                this.accessToken = storedToken;
+        // Получаем токен из storage или из памяти
+        let token = this.accessToken;
+        if (!token) {
+            token = await getAccessToken();
+            if (token) {
+                this.accessToken = token;
             }
         }
 
-        const makeRequest = async (token: string | null) => {
-            // Создаем новые заголовки на основе существующих
+        const makeRequest = async (requestToken: string | null) => {
             const headers: Record<string, string> = {
                 'Content-Type': 'application/json',
             };
 
-            // Копируем существующие заголовки из options
+            if (requestToken) {
+                headers['Authorization'] = `Bearer ${requestToken}`;
+            }
+
+            // Копируем существующие заголовки
             if (options.headers) {
                 const existingHeaders = options.headers as Record<string, string>;
                 Object.keys(existingHeaders).forEach(key => {
@@ -85,24 +91,20 @@ class ApiClient {
                 });
             }
 
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-
             return fetch(url, {
                 ...options,
-                headers: headers
+                headers
             });
         };
 
-        let response = await makeRequest(this.accessToken);
+        let response = await makeRequest(token);
 
-        // Если токен истек (401)
-        if (response.status === 401) {
+        // Если получили 401 и у нас есть токен, пробуем обновить
+        if (response.status === 401 && token) {
             console.log('⚠️ Got 401, attempting to refresh token...');
 
-            // Если уже идет обновление, добавляем в очередь
             if (this.isRefreshing) {
+                // Если уже идет обновление, добавляем в очередь
                 return new Promise((resolve, reject) => {
                     this.failedQueue.push({ resolve, reject });
                 }).then(async (newToken) => {
@@ -116,10 +118,10 @@ class ApiClient {
 
             if (newToken) {
                 this.accessToken = newToken;
-                await this.processQueue(null, newToken);
+                this.processQueue(null, newToken);
                 return makeRequest(newToken);
             } else {
-                await this.processQueue(new Error('Refresh failed'));
+                this.processQueue(new Error('Refresh failed'), null);
                 throw new Error('Session expired. Please login again.');
             }
         }

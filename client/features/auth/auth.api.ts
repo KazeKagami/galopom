@@ -1,51 +1,84 @@
 // features/auth/auth.api.ts
-import { API_URL } from '@/config/api.config';
 import { apiClient } from '@/services/api.client';
-import { LoginData, RegisterData, AuthResponse } from '@/types/auth.types';
+import { API_URL } from '@/config/api.config';
 
 export const authApi = {
-    login: async (data: LoginData): Promise<AuthResponse> => {
-        const response = await apiClient.post<AuthResponse>('/auth/login', data);
-        // response теперь содержит refreshToken
-        return response;
-    },
+    login: async (data: { email: string; password: string }) => {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
 
-    register: async (data: RegisterData): Promise<AuthResponse> => {
-        const response = await apiClient.post<AuthResponse>('/auth/register', data);
-        return response;
-    },
+        const result = await response.json();
 
-    logout: async (): Promise<void> => {
-        await apiClient.post('/auth/logout');
-    },
-
-    getMe: async (token?: string): Promise<{ user: any }> => {
-        if (token) {
-            // Временная установка токена для запроса
-            const originalToken = apiClient['accessToken'];
-            apiClient.setAccessToken(token);
-            try {
-                return await apiClient.get('/auth/me');
-            } finally {
-                apiClient.setAccessToken(originalToken);
-            }
+        if (!response.ok) {
+            throw new Error(result.message || 'Login failed');
         }
-        return await apiClient.get('/auth/me');
+
+        return result; // Должен содержать accessToken и refreshToken
     },
 
-    refreshToken: async (refreshToken: string): Promise<{ accessToken: string }> => {
+    register: async (data: { username: string; email: string; password: string }) => {
+        const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Registration failed');
+        }
+
+        return result;
+    },
+
+    refreshToken: async (refreshToken: string) => {
         const response = await fetch(`${API_URL}/auth/refresh`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ refreshToken }) // 👈 Отправляем refreshToken в теле
+            body: JSON.stringify({ refreshToken })
         });
 
+        const result = await response.json();
+
         if (!response.ok) {
-            throw new Error('Refresh failed');
+            throw new Error(result.message || 'Refresh failed');
         }
 
-        return response.json();
+        return result;
+    },
+
+    getMe: async (accessToken: string) => {
+        const response = await fetch(`${API_URL}/auth/me`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to get user');
+        }
+
+        return result;
+    },
+
+    logout: async () => {
+        // Опционально: отправить запрос на сервер для инвалидации токена
+        try {
+            await apiClient.post('/auth/logout');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
     }
 };
