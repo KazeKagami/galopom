@@ -1,10 +1,9 @@
-// hooks/useAuth.ts
+// hooks/use-auth.ts
 import { useState, useEffect } from 'react';
 import { authApi } from '@/features/auth/auth.api';
 import { apiClient } from '@/services/api.client';
-import { getToken, removeToken, saveToken } from '@/utils/token-storage';
+import { getAccessToken, getRefreshToken, saveToken, removeToken } from '@/utils/token-storage';
 import { AuthState } from '@/types/auth.types';
-import { API_URL } from '@/config/api.config';
 
 export const useAuth = () => {
     const [state, setState] = useState<AuthState>({
@@ -18,48 +17,33 @@ export const useAuth = () => {
         checkAuth();
     }, []);
 
-    const refreshAccessToken = async (): Promise<string | null> => {
-        try {
-            const response = await fetch(`${API_URL}/auth/refresh`, {
-                method: 'POST',
-                credentials: 'include',
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                await saveToken(data.accessToken);
-                apiClient.setAccessToken(data.accessToken);
-                return data.accessToken;
-            }
-            return null;
-        } catch {
-            return null;
-        }
-    };
-
     const checkAuth = async () => {
         try {
-            let token = await getToken();
-            if (token) {
-                apiClient.setAccessToken(token);
+            const accessToken = await getAccessToken();
+
+            if (accessToken) {
+                apiClient.setAccessToken(accessToken);
+
                 try {
-                    const response = await authApi.getMe(token);
+                    const response = await authApi.getMe();
                     setState({
                         user: response.user,
-                        accessToken: token,
+                        accessToken: accessToken,
                         isAuthenticated: true,
                         isLoading: false
                     });
                 } catch (error: any) {
-                    // Если токен истек (401), пробуем обновить
+                    // Токен истек, пробуем обновить
                     if (error.message?.includes('expired') || error.message?.includes('401')) {
-                        console.log('Token expired, refreshing...');
-                        const newToken = await refreshAccessToken();
-                        if (newToken) {
-                            const response = await authApi.getMe(newToken);
+                        console.log('Token expired, trying to refresh...');
+                        const newAccessToken = await refreshAccessToken();
+
+                        if (newAccessToken) {
+                            apiClient.setAccessToken(newAccessToken);
+                            const response = await authApi.getMe();
                             setState({
                                 user: response.user,
-                                accessToken: newToken,
+                                accessToken: newAccessToken,
                                 isAuthenticated: true,
                                 isLoading: false
                             });
@@ -79,42 +63,72 @@ export const useAuth = () => {
         }
     };
 
+    const refreshAccessToken = async (): Promise<string | null> => {
+        try {
+            const refreshToken = await getRefreshToken();
+            if (!refreshToken) {
+                console.log('No refresh token available');
+                return null;
+            }
+
+            const response = await authApi.refreshToken(refreshToken);
+            await saveToken(response.accessToken, refreshToken);
+            return response.accessToken;
+        } catch (error) {
+            console.error('Refresh failed:', error);
+            return null;
+        }
+    };
+
     const login = async (email: string, password: string) => {
         const response = await authApi.login({ email, password });
-        await saveToken(response.accessToken);
+
+        // Сохраняем оба токена
+        await saveToken(response.accessToken, response.refreshToken);
         apiClient.setAccessToken(response.accessToken);
+
         setState({
             user: response.user,
             accessToken: response.accessToken,
             isAuthenticated: true,
             isLoading: false
         });
+
         return response;
     };
 
     const register = async (username: string, email: string, password: string) => {
         const response = await authApi.register({ username, email, password });
-        await saveToken(response.accessToken);
+
+        // Сохраняем оба токена
+        await saveToken(response.accessToken, response.refreshToken);
         apiClient.setAccessToken(response.accessToken);
+
         setState({
             user: response.user,
             accessToken: response.accessToken,
             isAuthenticated: true,
             isLoading: false
         });
+
         return response;
     };
 
     const logout = async () => {
-        await authApi.logout();
-        await removeToken();
-        apiClient.setAccessToken(null);
-        setState({
-            user: null,
-            accessToken: null,
-            isAuthenticated: false,
-            isLoading: false
-        });
+        try {
+            await authApi.logout();
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            await removeToken();
+            apiClient.setAccessToken(null);
+            setState({
+                user: null,
+                accessToken: null,
+                isAuthenticated: false,
+                isLoading: false
+            });
+        }
     };
 
     return {

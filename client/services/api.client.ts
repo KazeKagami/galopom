@@ -1,6 +1,6 @@
 // services/api.client.ts
 import { API_URL } from '../config/api.config';
-import { getToken, saveToken, removeToken } from '@/utils/token-storage';
+import { getToken, saveToken, removeToken, getRefreshToken } from '@/utils/token-storage';
 
 class ApiClient {
     private baseURL: string;
@@ -19,21 +19,29 @@ class ApiClient {
     private async refreshToken(): Promise<string | null> {
         console.log('🔄 Trying to refresh token...');
         try {
+            const refreshToken = await getRefreshToken(); // 👈 Получаем из storage
+
+            if (!refreshToken) {
+                console.log('No refresh token available');
+                return null;
+            }
+
             const response = await fetch(`${this.baseURL}/auth/refresh`, {
                 method: 'POST',
-                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({ refreshToken }) // 👈 Отправляем в теле
             });
 
             if (response.ok) {
                 const data = await response.json();
                 this.accessToken = data.accessToken;
-                await saveToken(data.accessToken);
+                await saveToken(data.accessToken, refreshToken); // Сохраняем оба
                 console.log('✅ Token refreshed successfully');
                 return data.accessToken;
             }
+
             console.log('❌ Refresh failed, need re-login');
             await removeToken();
             return null;

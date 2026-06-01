@@ -1,30 +1,44 @@
 // utils/tokenStorage.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const TOKEN_KEY = 'access_token';
+const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 
-export const saveToken = async (token: string) => {
+export const saveToken = async (accessToken: string, refreshToken: string) => {
     try {
-        await AsyncStorage.setItem(TOKEN_KEY, token);
+        await AsyncStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+        await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
     } catch (error) {
         console.error('Error saving token:', error);
     }
 };
 
-export const getToken = async (): Promise<string | null> => {
+export const getAccessToken = async (): Promise<string | null> => {
     try {
-        return await AsyncStorage.getItem(TOKEN_KEY);
+        return await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
     } catch (error) {
         console.error('Error getting token:', error);
         return null;
     }
 };
 
+export const getRefreshToken = async (): Promise<string | null> => {
+    try {
+        return await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+    } catch (error) {
+        console.error('Error getting refresh token:', error);
+        return null;
+    }
+};
+
 export const removeToken = async () => {
     try {
-        await AsyncStorage.removeItem(TOKEN_KEY);
+        await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+        await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+        console.log('✅ Tokens removed');
     } catch (error) {
         console.error('Error removing token:', error);
     }
 };
+
+export const getToken = getAccessToken;
