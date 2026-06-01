@@ -17,8 +17,7 @@ const register = async (req, res, next) => {
         res.status(201).json({
             success: true,
             user: result.user,
-            accessToken: result.accessToken,
-            refreshToken: result.refreshToken
+            accessToken: result.accessToken
         });
     } catch (error) {
         console.error('❌ Register error:', error); // 👈 Отладка
@@ -42,8 +41,7 @@ const login = async (req, res, next) => {
         res.json({
             success: true,
             user: result.user,
-            accessToken: result.accessToken,
-            refreshToken: result.refreshToken
+            accessToken: result.accessToken
         });
     } catch (error) {
         console.error('❌ Login error:', error);

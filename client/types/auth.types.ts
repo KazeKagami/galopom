@@ -4,7 +4,7 @@ export interface User {
     username: string;
     email: string;
     role: string;
-    avatar?: string;
+    avatar: string;
     created_at?: string;
 }
 
@@ -22,12 +22,6 @@ export interface LoginData {
 export interface AuthResponse {
     success: boolean;
     user: User;
-    accessToken: string;
-    refreshToken: string
-}
-
-export interface RefreshTokenResponse {
-    success: boolean;
     accessToken: string;
 }
 

@@ -36,16 +36,9 @@ export default function LoginScreen() {
         if (!validate()) return;
 
         try {
-            console.log('🔐 Trying to login with:', email);
-            const response = await login(email, password);
-            console.log('✅ Login successful, tokens saved');
-            console.log('Access token exists:', !!response.accessToken);
-            console.log('Refresh token exists:', !!response.refreshToken);
-
-            // Переход на главный экран
-            router.replace('/(tabs)');
+            await login(email, password);
+            router.replace('/(tabs)'); // На главный экран
         } catch (error: any) {
-            console.error('❌ Login failed:', error);
             Alert.alert('Ошибка', error.message || 'Неверный email или пароль');
         }
     };
