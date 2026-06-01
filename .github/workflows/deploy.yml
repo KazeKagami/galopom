@@ -2,7 +2,7 @@ name: Deploy to VPS
 
 on:
   push:
-    branches: [master]  # у тебя master, оставляем
+    branches: [master] # у тебя master, оставляем
 
 jobs:
   deploy:
@@ -28,7 +28,16 @@ jobs:
             echo "🚀 Начинаем деплой..."
 
             # Переходим в проект
-            cd /var/www/galopom
+            cd /var/www/galopom || exit 0
+
+            # Проверяем, есть ли несохранённые изменения
+            if ! git diff --quiet; then
+                echo "📦 Есть локальные изменения, сохраняем в stash..."
+                git stash push -m "auto-stash-before-deploy-$(date +%s)"
+                STASHED=true
+            else
+                STASHED=false
+            fi
 
             # Забираем изменения
             echo "📦 git pull..."
@@ -38,7 +47,7 @@ jobs:
             echo "📦 Обновляем бэкенд..."
             cd server
             npm install
-            pm2 restart galopom-backend || pm2 start server.js --name galopom-backend
+            pm2 restart galopom-backend || pm2 start app.js --name galopom-backend
 
             # Обновляем фронтенд
             echo "📦 Обновляем фронтенд..."
@@ -48,7 +57,7 @@ jobs:
 
             # Проверяем, что сборка создалась
             if [ ! -d "dist" ]; then
-                echo "❌ Ошибка: папка build не создалась!"
+                echo "❌ Ошибка: папка dist не создалась!"
                 rm $LOCKFILE
                 exit 1
             fi

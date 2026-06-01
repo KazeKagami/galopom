@@ -4,6 +4,7 @@ import { authApi } from '@/features/auth/auth.api';
 import { apiClient } from '@/services/api.client';
 import { getToken, removeToken, saveToken } from '@/utils/token-storage';
 import { AuthState } from '@/types/auth.types';
+import { API_URL } from '@/config/api.config';
 
 export const useAuth = () => {
     const [state, setState] = useState<AuthState>({
@@ -17,18 +18,58 @@ export const useAuth = () => {
         checkAuth();
     }, []);
 
+    const refreshAccessToken = async (): Promise<string | null> => {
+        try {
+            const response = await fetch(`${API_URL}/auth/refresh`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                await saveToken(data.accessToken);
+                apiClient.setAccessToken(data.accessToken);
+                return data.accessToken;
+            }
+            return null;
+        } catch {
+            return null;
+        }
+    };
+
     const checkAuth = async () => {
         try {
-            const token = await getToken();
+            let token = await getToken();
             if (token) {
                 apiClient.setAccessToken(token);
-                const response = await authApi.getMe(token);
-                setState({
-                    user: response.user,
-                    accessToken: token,
-                    isAuthenticated: true,
-                    isLoading: false
-                });
+                try {
+                    const response = await authApi.getMe(token);
+                    setState({
+                        user: response.user,
+                        accessToken: token,
+                        isAuthenticated: true,
+                        isLoading: false
+                    });
+                } catch (error: any) {
+                    // Если токен истек (401), пробуем обновить
+                    if (error.message?.includes('expired') || error.message?.includes('401')) {
+                        console.log('Token expired, refreshing...');
+                        const newToken = await refreshAccessToken();
+                        if (newToken) {
+                            const response = await authApi.getMe(newToken);
+                            setState({
+                                user: response.user,
+                                accessToken: newToken,
+                                isAuthenticated: true,
+                                isLoading: false
+                            });
+                        } else {
+                            await logout();
+                        }
+                    } else {
+                        throw error;
+                    }
+                }
             } else {
                 setState(prev => ({ ...prev, isLoading: false }));
             }

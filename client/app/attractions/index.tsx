@@ -48,6 +48,7 @@ export default function AttractionsExploreScreen() {
     }, [sort, order])
 
     const handleSort = (field: 'title' | 'm_id') => {
+        setLoading(true);
         if (sort === field) {
             setOrderBy(prev => prev === 'asc' ? 'desc' : 'asc');
         } else {
@@ -114,7 +115,8 @@ export default function AttractionsExploreScreen() {
                         </TouchableOpacity>
                     </View>
                     <FlatList
-                        data={attractions}
+                        data={[...attractions]}
+                        key={`${sort}-${order}`}
                         numColumns={cols}
                         columnWrapperStyle={{ gap: 8 }}
                         renderItem={({ item }) => (

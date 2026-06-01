@@ -1,96 +1,172 @@
 // services/api.client.ts
-import { API_CONFIG, API_URL } from '../config/api.config';
+import { API_URL } from '../config/api.config';
+import { getToken, saveToken, removeToken } from '@/utils/token-storage';
 
 class ApiClient {
     private baseURL: string;
-    private timeout: number;
     private accessToken: string | null = null;
+    private isRefreshing = false;
+    private failedQueue: Array<{ resolve: Function; reject: Function }> = [];
 
     constructor() {
         this.baseURL = API_URL;
-        this.timeout = API_CONFIG.timeout;
     }
 
     setAccessToken(token: string | null) {
         this.accessToken = token;
     }
 
-    private buildUrl(endpoint: string, params?: Record<string, any>): string {
-        if (!params) return `${this.baseURL}${endpoint}`;
+    private async refreshToken(): Promise<string | null> {
+        console.log('🔄 Trying to refresh token...');
+        try {
+            const response = await fetch(`${this.baseURL}/auth/refresh`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
 
-        const query = new URLSearchParams(params).toString();
-        return `${this.baseURL}${endpoint}?${query}`;
+            if (response.ok) {
+                const data = await response.json();
+                this.accessToken = data.accessToken;
+                await saveToken(data.accessToken);
+                console.log('✅ Token refreshed successfully');
+                return data.accessToken;
+            }
+            console.log('❌ Refresh failed, need re-login');
+            await removeToken();
+            return null;
+        } catch (error) {
+            console.error('Refresh error:', error);
+            return null;
+        }
     }
 
-    private getHeaders(): Record<string, string> {
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
+    private async processQueue(error: Error | null, token: string | null = null) {
+        this.failedQueue.forEach(promise => {
+            if (error) {
+                promise.reject(error);
+            } else {
+                promise.resolve(token);
+            }
+        });
+        this.failedQueue = [];
+    }
+
+    private async fetchWithAuth(url: string, options: RequestInit): Promise<Response> {
+        // Проверяем, не пора ли обновить токен
+        if (!this.accessToken) {
+            const storedToken = await getToken();
+            if (storedToken) {
+                this.accessToken = storedToken;
+            }
+        }
+
+        const makeRequest = async (token: string | null) => {
+            // Создаем новые заголовки на основе существующих
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+
+            // Копируем существующие заголовки из options
+            if (options.headers) {
+                const existingHeaders = options.headers as Record<string, string>;
+                Object.keys(existingHeaders).forEach(key => {
+                    headers[key] = existingHeaders[key];
+                });
+            }
+
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            return fetch(url, {
+                ...options,
+                headers: headers
+            });
         };
 
-        if (this.accessToken) {
-            headers['Authorization'] = `Bearer ${this.accessToken}`;
-            console.log('✅ Token set in headers:', this.accessToken.substring(0, 20) + '...');
-        } else {
-            console.error('❌ NO ACCESS TOKEN in apiClient!');
+        let response = await makeRequest(this.accessToken);
+
+        // Если токен истек (401)
+        if (response.status === 401) {
+            console.log('⚠️ Got 401, attempting to refresh token...');
+
+            // Если уже идет обновление, добавляем в очередь
+            if (this.isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    this.failedQueue.push({ resolve, reject });
+                }).then(async (newToken) => {
+                    return makeRequest(newToken as string);
+                });
+            }
+
+            this.isRefreshing = true;
+            const newToken = await this.refreshToken();
+            this.isRefreshing = false;
+
+            if (newToken) {
+                this.accessToken = newToken;
+                await this.processQueue(null, newToken);
+                return makeRequest(newToken);
+            } else {
+                await this.processQueue(new Error('Refresh failed'));
+                throw new Error('Session expired. Please login again.');
+            }
         }
 
-        return headers;
+        return response;
     }
 
-    private async handleResponse(response: Response): Promise<any> {
+    async get<T>(endpoint: string): Promise<T> {
+        const response = await this.fetchWithAuth(`${this.baseURL}${endpoint}`, {
+            method: 'GET',
+        });
+
         const data = await response.json();
-
         if (!response.ok) {
-            throw new Error(data?.message || `HTTP ${response.status}`);
+            throw new Error(data.message || `HTTP ${response.status}`);
         }
-
         return data;
     }
 
-    async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
-        const url = this.buildUrl(endpoint, params);
-
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: this.getHeaders(),
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async post<T>(endpoint: string, body?: any, params?: Record<string, any>): Promise<T> {
-        const url = this.buildUrl(endpoint, params);
-
-        const response = await fetch(url, {
+    async post<T>(endpoint: string, body?: any): Promise<T> {
+        const response = await this.fetchWithAuth(`${this.baseURL}${endpoint}`, {
             method: 'POST',
-            headers: this.getHeaders(),
             body: body ? JSON.stringify(body) : undefined,
         });
 
-        return this.handleResponse(response);
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || `HTTP ${response.status}`);
+        }
+        return data;
     }
 
-    async put<T>(endpoint: string, body?: any, params?: Record<string, any>): Promise<T> {
-        const url = this.buildUrl(endpoint, params);
-
-        const response = await fetch(url, {
+    async put<T>(endpoint: string, body?: any): Promise<T> {
+        const response = await this.fetchWithAuth(`${this.baseURL}${endpoint}`, {
             method: 'PUT',
-            headers: this.getHeaders(),
             body: body ? JSON.stringify(body) : undefined,
         });
 
-        return this.handleResponse(response);
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || `HTTP ${response.status}`);
+        }
+        return data;
     }
 
-    async delete<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
-        const url = this.buildUrl(endpoint, params);
-
-        const response = await fetch(url, {
+    async delete<T>(endpoint: string): Promise<T> {
+        const response = await this.fetchWithAuth(`${this.baseURL}${endpoint}`, {
             method: 'DELETE',
-            headers: this.getHeaders(),
         });
 
-        return this.handleResponse(response);
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || `HTTP ${response.status}`);
+        }
+        return data;
     }
 }
 
