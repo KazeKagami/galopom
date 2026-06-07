@@ -1,27 +1,43 @@
-import { AttractionCard } from "@/components/attraction-card";
-import { UserCard } from "@/components/user-card";
-import { getUsers } from "@/features/users/users.api";
-import { UserResponse } from "@/types/users.types";
-import { router } from "expo-router";
+import { FavCard } from "@/components/favorite-card";
+import { getAttractionById } from "@/features/attractions/attractions.api";
+import { getUserFavorites } from "@/features/users/users.api";
+import { Attraction } from "@/types/attractions.types";
+import { Favorite } from "@/types/favorites.types";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Text, TouchableOpacity, View, StyleSheet, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const cols = 1;
 
-export default function UserListScreen() {
-    const [users, setUsers] = useState<UserResponse[]>([]);
+export default function MeFavoritesScreen() {
+    const { username } = useLocalSearchParams<{ username: string }>();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [refreshing, setRefreshing] = useState(false);
+    const [favorites, setFavorites] = useState<Favorite[]>([]);
+    const [attractions, setAttractions] = useState<Attraction[]>([]);
 
-    const fetchUsers = async () => {
+    const fetchFavorites = async (username: string) => {
         try {
-            setError(null);
             setLoading(true);
+            setError(null);
 
-            let resp = await getUsers();
-            setUsers(resp);
+            // Получаем массив избранного
+            const favoritesList = await getUserFavorites(username);
+
+            if (!Array.isArray(favoritesList)) {
+                setFavorites([]);
+                return;
+            }
+
+            setFavorites(favoritesList);
+
+            // Получаем данные о достопримечательностях
+            const attractionsData = await Promise.all(
+                favoritesList.map(fav => getAttractionById(fav.m_id))
+            );
+
+            setAttractions(attractionsData);
         } catch (err: any) {
             if (err.message === "Failed to fetch") {
                 setError("Не удалось подключиться к серверу. Проверьте соединение.");
@@ -30,13 +46,14 @@ export default function UserListScreen() {
             }
         } finally {
             setLoading(false);
-            setRefreshing(false);
         }
     };
 
     useEffect(() => {
-        fetchUsers()
-    }, []);
+        if (username) {
+            fetchFavorites(username);
+        }
+    }, [username]);
 
     if (loading) {
         return (
@@ -57,7 +74,7 @@ export default function UserListScreen() {
                     <Text>
                         ⚠️ {error}
                     </Text>
-                    <TouchableOpacity onPress={fetchUsers}>
+                    <TouchableOpacity onPress={() => username && fetchFavorites(username)}>
                         <Text>Повторить</Text>
                     </TouchableOpacity>
                 </View>
@@ -65,13 +82,15 @@ export default function UserListScreen() {
         );
     }
 
-    if (!users) {
+    if (favorites.length === 0) {
         return (
             <SafeAreaView style={[styles.cont]}>
-                <View style={styles.centered}>
-                    <Text>Нет достопримечательностей</Text>
-                    <TouchableOpacity onPress={fetchUsers}>
-                        <Text>Обновить</Text>
+                <View>
+                    <Text>
+                        {`У вас нет избранных достопримечательностей.\nПосмотрите каталог и выберите понравившиеся объекты.`}
+                    </Text>
+                    <TouchableOpacity onPress={() => router.push('/attractions')}>
+                        <Text>В каталог</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -83,23 +102,22 @@ export default function UserListScreen() {
             <View style={styles.container}>
                 <View style={styles.main_block}>
                     <View style={styles.header}>
-                        <Text style={styles.main_block_title}>Пользователи</Text>
-                        <Text style={styles.main_block_subtitle}>Найдено {users.length}</Text>
+                        <Text style={styles.main_block_title}>Достопримечательности</Text>
+                        <Text style={styles.main_block_subtitle}>Найдено {favorites.length} объектов</Text>
                     </View>
                     <FlatList
-                        data={[...users]}
+                        data={[...attractions]}
                         numColumns={cols}
                         renderItem={({ item }) => (
                             <View style={{ flex: 1, height: 150 }}>
-                                <TouchableOpacity onPress={() => router.push(`/users/${item.username}`)}>
-                                    <UserCard item={item} />
+                                <TouchableOpacity onPress={() => router.push(`/attractions/${item.m_id}`)}>
+                                    <FavCard item={item} />
                                 </TouchableOpacity>
                             </View>
                         )}
                         showsVerticalScrollIndicator={false}
-                        keyExtractor={(item) => item.username.toString()}
-                        style={{ padding: 15 }}
-                    />
+                        keyExtractor={(item) => item.m_id.toString()}
+                        style={{ padding: 15 }} />
                 </View>
             </View>
         </SafeAreaView>
@@ -114,12 +132,6 @@ const styles = StyleSheet.create({
     cont: {
         flex: 1
     },
-    centered: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
     main_block: {
         flex: 1,
         padding: 20,
@@ -130,7 +142,6 @@ const styles = StyleSheet.create({
         paddingLeft: 15,
         paddingBottom: 5,
         paddingTop: 5,
-        paddingRight: 15,
         justifyContent: 'space-between',
 
     },

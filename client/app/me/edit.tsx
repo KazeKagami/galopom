@@ -49,7 +49,11 @@ export default function EditProfileScreen() {
                 avatar: resp.avatar_url || ''
             });
         } catch (err: any) {
-            setError(err.message);
+            if (err.message === "Failed to fetch") {
+                setError("Не удалось подключиться к серверу. Проверьте соединение.");
+            } else {
+                setError(err.message);
+            }
         } finally {
             setLoading(false);
         }

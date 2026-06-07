@@ -119,6 +119,23 @@ class ApiClient {
         return response;
     }
 
+    async postWithoutAuth<T>(endpoint: string, body?: any): Promise<T> {
+        const response = await fetch(`${this.baseURL}${endpoint}`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: body ? JSON.stringify(body) : undefined,
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || `HTTP ${response.status}`);
+        }
+        return data;
+    }
+
     async get<T>(endpoint: string): Promise<T> {
         const response = await this.fetchWithAuth(`${this.baseURL}${endpoint}`, {
             method: 'GET',

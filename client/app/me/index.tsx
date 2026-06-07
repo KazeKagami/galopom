@@ -4,7 +4,7 @@ import { getUserByUsername } from "@/features/users/users.api";
 import { useAuth } from "@/hooks/use-auth";
 import { UserResponse } from "@/types/users.types";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -14,6 +14,19 @@ export default function MyProfileScreen() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [user, setUser] = useState<UserResponse | null>(null);
+
+    const roleEmoji = useMemo(() => {
+        switch (user?.role) {
+            case 'admin':
+                return { emoji: '👑' };
+            case 'admin_bot':
+                return { emoji: '😻' };
+            case 'bot':
+                return { emoji: '🤖' };
+            default:
+                return { emoji: '👤' };
+        }
+    }, [])
 
     useEffect(() => {
         if (authLoading) return;
@@ -35,27 +48,29 @@ export default function MyProfileScreen() {
             const resp = await getUserByUsername(username);
             setUser(resp);
         } catch (err: any) {
-            setError(err.message);
+            if (err.message === "Failed to fetch") {
+                setError("Не удалось подключиться к серверу. Проверьте соединение.");
+            } else {
+                setError(err.message);
+            }
         } finally {
             setLoading(false);
         }
     };
 
     const handleLogout = () => {
-        Alert.alert(
-            'Выход',
-            'Вы уверены, что хотите выйти?',
-            [
-                { text: 'Отмена', style: 'cancel' },
-                {
-                    text: 'Выйти',
-                    onPress: async () => {
-                        await logout();
-                        router.replace('/auth/login');
-                    }
-                }
-            ]
-        );
+        console.log('1. Button pressed');
+
+        // Для Web платформы используем window.confirm
+        const confirmed = window.confirm('Вы уверены, что хотите выйти?');
+
+        if (confirmed) {
+            console.log('Logout confirmed');
+            logout();
+            router.replace('/');
+        } else {
+            console.log('Logout cancelled');
+        }
     };
 
     if (authLoading || loading) {
@@ -95,8 +110,7 @@ export default function MyProfileScreen() {
             <View style={{ padding: 20 }}>
                 <TouchableOpacity
                     onPress={() => router.push('/me/edit')}
-                    style={{ position: 'absolute', right: 20, top: 20, zIndex: 1 }}
-                >
+                    style={{ position: 'absolute', right: 20, top: 20, zIndex: 1 }}>
                     <Text style={{ fontSize: 18, color: 'blue' }}>✏️ Редактировать</Text>
                 </TouchableOpacity>
 
@@ -108,12 +122,19 @@ export default function MyProfileScreen() {
                 </View>
 
                 <View style={{ backgroundColor: '#f5f5f5', padding: 20, borderRadius: 12 }}>
-                    <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 5 }}>{user.username}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 5 }}>{user.username}</Text>
+                        <TouchableOpacity
+                            onPress={() => router.push(`/users/${user.username}/favorites`)}
+                            style={{ backgroundColor: '#e0e0e0', paddingHorizontal: 10, paddingVertical: 2, borderRadius: 20, justifyContent: 'center' }}>
+                            <Text style={{ fontSize: 16 }}>⭐ Избранное</Text>
+                        </TouchableOpacity>
+                    </View>
                     <Text style={{ fontSize: 16, color: '#666', marginBottom: 10 }}>{user.email}</Text>
 
                     <View style={{ flexDirection: 'row', marginTop: 10 }}>
                         <View style={{ backgroundColor: '#e0e0e0', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 }}>
-                            <Text style={{ fontSize: 12 }}>👑 {user.role}</Text>
+                            <Text style={{ fontSize: 12 }}>{roleEmoji.emoji} {user.role}</Text>
                         </View>
                     </View>
 

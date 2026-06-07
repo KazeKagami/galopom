@@ -51,7 +51,6 @@ export const useAuth = () => {
                         isLoading: false
                     });
                 } catch (error: any) {
-                    // Если токен истек (401), пробуем обновить
                     if (error.message?.includes('expired') || error.message?.includes('401')) {
                         console.log('Token expired, refreshing...');
                         const newToken = await refreshAccessToken();
@@ -106,7 +105,17 @@ export const useAuth = () => {
     };
 
     const logout = async () => {
-        await authApi.logout();
+        // Пытаемся отправить запрос на сервер, но не блокируемся
+        try {
+            await fetch(`${API_URL}/auth/logout`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+        } catch (error) {
+            console.warn('Logout request failed, cleaning locally anyway:', error);
+        }
+
+        // Всегда очищаем локальные данные
         await removeToken();
         apiClient.setAccessToken(null);
         setState({

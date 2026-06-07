@@ -2,14 +2,19 @@ import { AttractionCard } from "@/components/attraction-card";
 //import { FiltersCard } from "@/components/filters-card";
 //import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View, Text } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View, Text, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Attraction } from "../../types/attractions.types";
 import { getAttractions } from "@/features/attractions/attractions.api";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 
 
-const cols = 2;
+const cols = Platform.select({
+    android: 1,
+    ios: 1,
+    web: 2,
+    default: 2
+})
 
 export default function AttractionsExploreScreen() {
     const [attractions, setAttractions] = useState<Attraction[]>([]);
@@ -34,7 +39,11 @@ export default function AttractionsExploreScreen() {
             setAttractions(resp);
         }
         catch (err: any) {
-            setError(err.message);
+            if (err.message === "Failed to fetch") {
+                setError("Не удалось подключиться к серверу. Проверьте соединение.");
+            } else {
+                setError(err.message);
+            }
         }
         finally {
             setLoading(false);
@@ -61,11 +70,6 @@ export default function AttractionsExploreScreen() {
     if (loading) {
         return (
             <SafeAreaView style={[styles.cont]}>
-                <View>
-                    <Text style={{ fontSize: 24, fontStyle: 'italic', fontWeight: 'bold' }}>
-                        Этот проект находится на разработке, и не является законченым продуктом! Сервак для теста и доступа без локалки
-                    </Text>
-                </View>
                 <View>
                     <ActivityIndicator size="large" />
                     <Text>Загрузка достопримечательностей...</Text>
@@ -95,6 +99,19 @@ export default function AttractionsExploreScreen() {
         );
     }
 
+    if (!attractions) {
+        return (
+            <SafeAreaView style={[styles.cont]}>
+                <View style={styles.centered}>
+                    <Text>Нет достопримечательностей</Text>
+                    <TouchableOpacity onPress={fetchAttractions}>
+                        <Text>Обновить</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        )
+    }
+
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -118,7 +135,7 @@ export default function AttractionsExploreScreen() {
                         data={[...attractions]}
                         key={`${sort}-${order}`}
                         numColumns={cols}
-                        columnWrapperStyle={{ gap: 8 }}
+                        columnWrapperStyle={{ gap: 10 }}
                         renderItem={({ item }) => (
                             <View style={{ flex: 1, height: 150 }}>
                                 <TouchableOpacity onPress={() => router.push(`/attractions/${item.m_id}`)}>
@@ -144,13 +161,16 @@ const styles = StyleSheet.create({
     cont: {
         flex: 1
     },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
     main_block: {
         flex: 1,
-        marginBottom: 10,
-        marginTop: 5,
-        marginLeft: 100,
-        marginRight: 100,
-        borderRadius: 25
+        padding: 20,
+        borderRadius: 25,
     },
     header: {
         flexDirection: 'row',

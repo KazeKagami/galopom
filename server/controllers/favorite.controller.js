@@ -5,11 +5,7 @@ const getUserFavs = async (req, res, next) => {
         const { username } = req.params;
         const favorites = await favoriteService.getUserFavorites(username);
 
-        res.json({
-            success: true,
-            count: favorites.length,
-            favorites
-        });
+        res.json(favorites);
     } catch (error) {
         next(error);
     }
@@ -17,20 +13,20 @@ const getUserFavs = async (req, res, next) => {
 
 const addToFav = async (req, res, next) => {
     try {
-        const { username, att_m_id } = req.body;
+        const { username, m_id } = req.body;
 
-        if (!username || !att_m_id) {
+        if (!username || !m_id) {
             return res.status(400).json({
                 success: false,
-                message: 'username и att_m_id обязательны'
+                message: 'username и m_id обязательны'
             });
         }
 
-        const data = await favoriteService.addToFavorites(username, att_m_id);
+        const data = await favoriteService.addToFavorites(username, m_id);
 
         res.status(201).json({
             success: true,
-            message: `Добавлен объект ${data.att_m_id} пользователю ${data.username}`,
+            message: `Добавлен объект ${data.m_id} пользователю ${data.username}`,
             data
         });
     } catch (error) {
@@ -46,13 +42,13 @@ const addToFav = async (req, res, next) => {
 
 const removeFromFav = async (req, res, next) => {
     try {
-        const { username, att_m_id } = req.body;
+        const { username, m_id } = req.body;
 
-        await favoriteService.removeFromFavorites(username, att_m_id);
+        await favoriteService.removeFromFavorites(username, m_id);
 
         res.json({
             success: true,
-            message: `Удален объект ${att_m_id} из избранного пользователя ${username}`
+            message: `Удален объект ${m_id} из избранного пользователя ${username}`
         });
     } catch (error) {
         if (error.message === 'Not found in favorites') {
@@ -67,8 +63,8 @@ const removeFromFav = async (req, res, next) => {
 
 const checkIsFav = async (req, res, next) => {
     try {
-        const { username, att_m_id } = req.params;
-        const isFavorite = await favoriteService.isFavorite(username, parseInt(att_m_id));
+        const { username, m_id } = req.params;
+        const isFavorite = await favoriteService.isFavorite(username, parseInt(m_id));
 
         res.json({
             success: true,

@@ -1,5 +1,6 @@
 // features/users/users.api.ts
 import { apiClient } from "@/services/api.client"
+import { Favorite } from "@/types/favorites.types";
 import { UserResponse } from "@/types/users.types"
 //import { getToken } from "@/utils/token-storage";
 
@@ -21,6 +22,11 @@ export const updateMyProfile = async (data: {
     console.log('Updating profile with data:', data);
     const response = await apiClient.put<UserResponse>('/users/me', data);
     return response;
+};
+
+export const getUserFavorites = async (username: string): Promise<Favorite[]> => {
+    const response = await apiClient.get<Favorite[]>(`/users/${username}/favorites`);
+    return response; // Возвращаем именно data, а не весь response
 };
 
 /*export const uploadAvatar = async (username: string, imageUri: string): Promise<{ avatarUrl: string }> => {

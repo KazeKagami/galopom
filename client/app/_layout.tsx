@@ -17,7 +17,7 @@ export default function RootLayout() {
       <View style={{ flex: 1 }}>
         {!hideTabBar && <CustomTabBar />}
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="home" />
+          <Stack.Screen name="(tabs)" />
           <Stack.Screen name="attractions" />
           <Stack.Screen name="me" />
           <Stack.Screen name="users" />

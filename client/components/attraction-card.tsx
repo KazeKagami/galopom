@@ -86,10 +86,10 @@ const styles = StyleSheet.create({
         marginVertical: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowOpacity: 0.5,
+        shadowRadius: 7,
         elevation: 2,
-        minHeight: 120, // Минимальная высота
+        minHeight: 120,
     },
     cardTitle: {
         fontSize: 14,

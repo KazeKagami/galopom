@@ -4,17 +4,19 @@ import { useRouter, usePathname, Href } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useAuth } from '@/hooks/use-auth';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
 
 const tabs: Array<{
     name: string;
-    path: Href;  // 👈 Используем тип Href
+    path: Href;
     title: string;
-    icon: string;
+    icon?: string;
     showAlways?: boolean;
     requiresAuth?: boolean;
 }> = [
         { name: 'index', path: '/', title: 'Главная', icon: 'home', showAlways: true },
         { name: 'explore', path: '/attractions', title: 'Поиск', icon: 'search', showAlways: true },
+        { name: 'users', path: '/users', title: 'Пользователи', showAlways: true },
         { name: 'me', path: '/me', title: 'Профиль', icon: 'user', showAlways: false, requiresAuth: true },
     ];
 
@@ -22,6 +24,12 @@ export function CustomTabBar() {
     const router = useRouter();
     const pathname = usePathname();
     const { isAuthenticated } = useAuth();
+    const [forceUpdate, setForceUpdate] = useState(0);
+
+    // Принудительное обновление при изменении статуса авторизации
+    useEffect(() => {
+        setForceUpdate(prev => prev + 1);
+    }, [isAuthenticated]);
 
     const visibleTabs = tabs.filter(tab => {
         if (tab.showAlways) return true;
@@ -63,7 +71,7 @@ export function CustomTabBar() {
 const styles = StyleSheet.create({
     safeArea: {
         backgroundColor: '#fff',
-        borderBottomWidth: 1,        // 👈 border снизу вместо сверху
+        borderBottomWidth: 1,
         borderBottomColor: '#e0e0e0',
     },
     container: {
