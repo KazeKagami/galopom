@@ -46,27 +46,36 @@ export default function LoginScreen() {
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
-                keyboardShouldPersistTaps="handled"
-            >
+                keyboardShouldPersistTaps="handled">
                 <View style={styles.header}>
                     <Text style={styles.title}>Добро пожаловать! 👋</Text>
                     <Text style={styles.subtitle}>Войдите в свой аккаунт</Text>
                 </View>
 
+                <View style={styles.test_cont}>
+                    <Text style={styles.test_text_h1}>Тестовый пользователь:</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <Text style={styles.test_text_select}>Почта:</Text>
+                        <Text style={styles.test_text_select}>test1@gmail.com</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <Text style={styles.test_text_select}>Пароль:</Text>
+                        <Text style={styles.test_text_select}>qwerty12345</Text>
+                    </View>
+                </View>
+
                 <View style={styles.form}>
                     <FormInput
-                        label="Email или имя пользователя"
-                        placeholder="example@mail.com"
+                        label="Email"
+                        placeholder="example@gmail.com"
                         value={email}
                         onChangeText={setEmail}
                         autoCapitalize="none"
                         keyboardType="email-address"
-                        error={errors.email}
-                    />
+                        error={errors.email} />
 
                     <FormInput
                         label="Пароль"
@@ -74,19 +83,17 @@ export default function LoginScreen() {
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry
-                        error={errors.password}
-                    />
+                        error={errors.password} />
 
-                    <TouchableOpacity
+                    {/*<TouchableOpacity
                         style={styles.forgotPassword}>
                         <Text style={styles.forgotPasswordText}>Забыли пароль?</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity>*/}
 
                     <TouchableOpacity
                         style={[styles.loginButton, isLoading && styles.buttonDisabled]}
                         onPress={handleLogin}
-                        disabled={isLoading}
-                    >
+                        disabled={isLoading}>
                         {isLoading ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
@@ -94,12 +101,12 @@ export default function LoginScreen() {
                         )}
                     </TouchableOpacity>
 
-                    <View style={styles.registerContainer}>
+                    {/*<View style={styles.registerContainer}>
                         <Text style={styles.registerText}>Нет аккаунта? </Text>
                         <TouchableOpacity onPress={() => router.push('auth/register' as Href)}>
                             <Text style={styles.registerLink}>Зарегистрироваться</Text>
                         </TouchableOpacity>
-                    </View>
+                    </View>*/}
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -107,6 +114,24 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+    test_cont: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.5,
+        shadowRadius: 7,
+        maxWidth: 300,
+        borderRadius: 8,
+        padding: 12,
+        alignSelf: 'center',
+        marginBottom: 12
+    },
+    test_text_h1: {
+        fontSize: 18,
+        fontWeight: 'bold'
+    },
+    test_text_select: {
+        fontSize: 16
+    },
     container: {
         flex: 1,
         backgroundColor: '#fff',
@@ -118,7 +143,7 @@ const styles = StyleSheet.create({
         paddingVertical: 40,
     },
     header: {
-        marginBottom: 48,
+        marginBottom: 18,
         alignItems: 'center',
     },
     title: {

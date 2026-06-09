@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import LoginScreen from "../auth/login";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, View } from "react-native";
 
 // app/(tabs)/index.tsx (главный экран)
 export default function HomeScreen() {
